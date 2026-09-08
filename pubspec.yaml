@@ -1,0 +1,38 @@
+name: nhac_motoboy
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_screenutil: ^5.9.3
+  go_router: ^18.0.0
+  lottie: ^3.5.1
+  nowa_runtime: ^0.1.3
+  flutter_svg: ^2.0.17
+  email_validator: ^3.0.0
+  mask_text_input_formatter: ^2.9.0
+  pin_code_fields: ^8.0.1
+  provider: ^6.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/
+    - assets/animations/
+    - assets/fonts/
+
+  fonts:
+    - family: Roboto
+      fonts:
+        - asset: assets/fonts/Roboto.ttf
