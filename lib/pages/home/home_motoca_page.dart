@@ -48,75 +48,20 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
     return Scaffold(
       backgroundColor: AppColors.fundo,
       extendBody: true,
-      appBar: _selectedIndex == 3
+            appBar: _selectedIndex == 3
           ? null
           : AppBar(
-              title: PopupMenuButton<String>(
-                // 1. Abre ABAIXO do título (estilo Instagram)
-                position: PopupMenuPosition.under,
-                offset: const Offset(0, 8), // Pequeno espaçamento vertical
-
-                // 2. O que aparece na AppBar (Texto dinâmico + setinha)
-                child: Row(
-                  mainAxisSize: MainAxisSize.min, // Impede de esticar a AppBar
-                  children: [
-                    Text(
-                      _estaOnline ? 'Disponível' : 'Indisponível',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4), // Corrigido de height para width
-                    const Icon(Icons.keyboard_arrow_down, size: 24),
-                  ],
-                ),
-
-                // 3. Os itens que aparecem no dropdown
-                itemBuilder: (context) => [
-                  PopupMenuItem<String>(
-                    value: 'Disponível',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle,
-                          color: _estaOnline ? AppColors.primaria : Colors.grey,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Disponível',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'Indisponível',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.pause_circle_outline,
-                          color: !_estaOnline ? AppColors.primaria : Colors.grey,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Indisponível',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                // 4. Ação ao clicar em um item do menu
-                onSelected: (value) {
-                  setState(() {
-                    _estaOnline = (value == 'Disponível');
-                  });
-                },
+              centerTitle: true, 
+              elevation: 0,
+              backgroundColor: AppColors.fundo,
+              
+              // --- MEXA AQUI: Adicione o Padding para empurrar para baixo ---
+              title: Padding(
+                padding: EdgeInsets.only(top: 8.h), // <--- Aumente esse valor (ex: 12.h, 16.h) até ficar onde você quer
+                child: _buildTopStatusToggle(),
               ),
+              // ---------------------------------------------------------------
+
               actions: [
                 IconButton(
                   icon: Icon(
@@ -130,6 +75,7 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
                     context.go('/');
                   },
                 ),
+                SizedBox(width: 8.w),
               ],
             ),
       body: Stack(
@@ -160,6 +106,102 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
           ),
         ],
       ),
+    );
+  }
+
+  // --- NOVO: Toggle de Status com o mesmo estilo da Bottom Navigation ---
+  Widget _buildTopStatusToggle() {
+    return PopupMenuButton<String>(
+      position: PopupMenuPosition.under,
+      offset: const Offset(0, 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20.r),
+      ),
+      color: Colors.white,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 255, 255, 255),
+          borderRadius: BorderRadius.circular(50.r),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.texto.withValues(alpha: 0.1),
+              blurRadius: 16.r,
+              offset: Offset(0, 8.h),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Indicador visual (bolinha)
+            Container(
+              width: 10.r,
+              height: 10.r,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _estaOnline ? const Color(0xFF4CAF50) : AppColors.desabilitado,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Text(
+              _estaOnline ? 'Disponível' : 'Indisponível',
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.w700,
+                color: _estaOnline ? const Color(0xFF2E7D32) : AppColors.desabilitado,
+              ),
+            ),
+            SizedBox(width: 6.w),
+            Icon(
+              Icons.keyboard_arrow_down,
+              size: 20.r,
+              color: AppColors.texto,
+            ),
+          ],
+        ),
+      ),
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'Disponível',
+          child: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: _estaOnline ? AppColors.primaria : Colors.grey,
+                size: 22,
+              ),
+              SizedBox(width: 12.w),
+              const Text(
+                'Disponível',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'Indisponível',
+          child: Row(
+            children: [
+              Icon(
+                Icons.pause_circle_outline,
+                color: !_estaOnline ? AppColors.primaria : Colors.grey,
+                size: 22,
+              ),
+              SizedBox(width: 12.w),
+              const Text(
+                'Indisponível',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+      ],
+      onSelected: (value) {
+        setState(() {
+          _estaOnline = (value == 'Disponível');
+        });
+      },
     );
   }
 
@@ -930,7 +972,7 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color.fromARGB(255, 255, 255, 255),
         borderRadius: BorderRadius.circular(50.r),
         boxShadow: [
           BoxShadow(
