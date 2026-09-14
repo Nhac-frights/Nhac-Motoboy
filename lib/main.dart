@@ -10,9 +10,7 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => CadastroController()),
-      ],
+      providers: [ChangeNotifierProvider(create: (_) => CadastroController())],
       child: const MeuApp(),
     ),
   );

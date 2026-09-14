@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
+import 'package:nhac_motoboy/pages/home/tabs/profile/dados_pessoais_tab.dart';
 import 'package:provider/provider.dart';
 
 import '../../../controllers/cadastro_controller.dart';
@@ -407,7 +408,9 @@ class PerfilTab extends StatelessWidget {
                   iconColor: const Color(0xFFFF6961),
                   title: 'Dados Pessoais',
                   subtitle: 'Nome, CPF, CNH e contato...',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const DadosPessoaisTab()));
+                  },
                 ),
                 Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
                 _buildAccountRow(

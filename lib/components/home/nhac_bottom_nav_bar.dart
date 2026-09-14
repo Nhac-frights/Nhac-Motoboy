@@ -73,7 +73,7 @@ class NhacBottomNavBar extends StatelessWidget {
           duration: const Duration(milliseconds: 350),
           curve: Curves.fastOutSlowIn,
           padding: EdgeInsets.symmetric(
-            horizontal: isSelected ? 18.w : 12.w,
+            horizontal: isSelected ? 20.w : 12.w,
             vertical: 10.h,
           ),
           decoration: BoxDecoration(
@@ -85,7 +85,7 @@ class NhacBottomNavBar extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 26.sp,
+                size: 30.sp,
                 color: isSelected
                     ? AppColors.primaria
                     : const Color(0xFFA0A0A0),
@@ -97,7 +97,7 @@ class NhacBottomNavBar extends StatelessWidget {
                   width: isSelected ? null : 0,
                   child: isSelected
                       ? Padding(
-                          padding: EdgeInsets.only(left: 6.w),
+                          padding: EdgeInsets.only(left: 8.w),
                           child: Text(
                             label,
                             maxLines: 1,
