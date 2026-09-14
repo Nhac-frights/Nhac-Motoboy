@@ -3,9 +3,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../components/entrega/card_nova_oferta_dialog.dart';
 import '../../components/home/nhac_bottom_nav_bar.dart';
 import '../../components/home/status_toggle_button.dart';
 import '../../controllers/cadastro_controller.dart';
+import '../../controllers/entrega_provider.dart';
 import '../../globals/theme_colors.dart';
 import 'tabs/ganhos_tab.dart';
 import 'tabs/inicio_tab.dart';
@@ -50,6 +52,9 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final entregaProvider = context.watch<EntregaProvider>();
+    final estaOnline = entregaProvider.estaOnline;
+    final oferta = entregaProvider.ofertaAtual;
 
     return Scaffold(
       backgroundColor: AppColors.fundo,
@@ -63,11 +68,9 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
               title: Padding(
                 padding: EdgeInsets.only(top: 8.h),
                 child: StatusToggleButton(
-                  estaOnline: _estaOnline,
+                  estaOnline: estaOnline,
                   onChanged: (val) {
-                    setState(() {
-                      _estaOnline = val;
-                    });
+                    entregaProvider.alternarStatusOnline(val);
                   },
                 ),
               ),
@@ -99,11 +102,9 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
             },
             children: [
               InicioTab(
-                estaOnline: _estaOnline,
+                estaOnline: estaOnline,
                 onToggleOnline: (val) {
-                  setState(() {
-                    _estaOnline = val;
-                  });
+                  entregaProvider.alternarStatusOnline(val);
                 },
               ),
               const PedidosTab(),
@@ -120,6 +121,14 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
               onItemSelected: _onItemTapped,
             ),
           ),
+          // Card de Nova Corrida quando recebida do backend
+          if (oferta != null)
+            Container(
+              color: Colors.black.withValues(alpha: 0.5),
+              child: Center(
+                child: CardNovaOfertaDialog(oferta: oferta),
+              ),
+            ),
         ],
       ),
     );

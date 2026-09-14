@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../controllers/cadastro_controller.dart';
+import '../../../controllers/entrega_provider.dart';
 import '../../../globals/theme_colors.dart';
 
 class InicioTab extends StatelessWidget {

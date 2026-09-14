@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/cadastro_controller.dart';
+import 'controllers/entrega_provider.dart';
 import 'controllers/user_provider.dart';
 import 'globals/router.dart';
 import 'globals/theme_colors.dart';
@@ -14,6 +15,7 @@ void main() {
       providers: [
         ChangeNotifierProvider(create: (_) => CadastroController()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => EntregaProvider()),
       ],
       child: const MeuApp(),
     ),

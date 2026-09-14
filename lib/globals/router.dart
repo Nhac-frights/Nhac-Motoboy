@@ -16,6 +16,7 @@ import '../pages/home/tabs/profile/editar_nome_page.dart';
 import '../pages/home/tabs/profile/editar_senha_page.dart';
 import '../pages/home/tabs/profile/editar_telefone_page.dart';
 import '../pages/home/tabs/profile/editar_veiculo_page.dart';
+import '../pages/home/tabs/rota_entrega_page.dart';
 
 class _SlideRightToLeftPageRoute<T> extends PageRoute<T>
     with MaterialRouteTransitionMixin<T> {
@@ -216,6 +217,13 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => _buildPage(
         key: state.pageKey,
         child: const EditarSenhaPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/rota-entrega',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const RotaEntregaPage(),
       ),
     ),
   ],
