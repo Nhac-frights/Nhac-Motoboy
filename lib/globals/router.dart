@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../pages/bem_vindo_motoca.dart';
-import '../pages/email_motoca.dart';
 import '../pages/auth/continuar_senha.dart';
 import '../pages/auth/insira_telefone.dart';
 import '../pages/auth/verificacao_numero.dart';
+import '../pages/bem_vindo_motoca.dart';
+import '../pages/email_motoca.dart';
 import '../pages/home/home_motoca_page.dart';
+import '../pages/home/tabs/profile/dados_pessoais_tab.dart';
+import '../pages/home/tabs/profile/editar_dados_bancarios_page.dart';
+import '../pages/home/tabs/profile/editar_documentos_page.dart';
+import '../pages/home/tabs/profile/editar_email_page.dart';
+import '../pages/home/tabs/profile/editar_foto_page.dart';
+import '../pages/home/tabs/profile/editar_nome_page.dart';
+import '../pages/home/tabs/profile/editar_senha_page.dart';
+import '../pages/home/tabs/profile/editar_telefone_page.dart';
+import '../pages/home/tabs/profile/editar_veiculo_page.dart';
 
 class _SlideRightToLeftPageRoute<T> extends PageRoute<T>
     with MaterialRouteTransitionMixin<T> {
@@ -144,6 +153,69 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => _buildPage(
         key: state.pageKey,
         child: const HomeMotocaPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/dados-pessoais',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const DadosPessoaisTab(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-foto',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarFotoPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-nome',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarNomePage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-email',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarEmailPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-telefone',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarTelefonePage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-documentos',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarDocumentosPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-veiculo',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarVeiculoPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-dados-bancarios',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarDadosBancariosPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/editar-senha',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const EditarSenhaPage(),
       ),
     ),
   ],

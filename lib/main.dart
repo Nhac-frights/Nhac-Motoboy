@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/cadastro_controller.dart';
+import 'controllers/user_provider.dart';
 import 'globals/router.dart';
 import 'globals/theme_colors.dart';
 
@@ -10,7 +11,10 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => CadastroController())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => CadastroController()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
       child: const MeuApp(),
     ),
   );

@@ -1,14 +1,71 @@
+import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
-import 'package:nhac_motoboy/pages/home/tabs/profile/dados_pessoais_tab.dart';
 import 'package:provider/provider.dart';
 
 import '../../../controllers/cadastro_controller.dart';
+import '../../../controllers/user_provider.dart';
 import '../../../globals/theme_colors.dart';
+import 'profile/dados_pessoais_tab.dart';
+import 'profile/editar_dados_bancarios_page.dart';
+import 'profile/editar_foto_page.dart';
+import 'profile/editar_veiculo_page.dart';
 
 class PerfilTab extends StatelessWidget {
   const PerfilTab({super.key});
+
+  void _mostrarPreviewFoto(BuildContext context, String? fotoPath) {
+    if (fotoPath == null || fotoPath.isEmpty) return;
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierDismissible: true,
+        barrierColor: Colors.transparent,
+        transitionDuration: const Duration(milliseconds: 110),
+        reverseTransitionDuration: const Duration(milliseconds: 110),
+        pageBuilder: (ctx, animation, secondaryAnimation) {
+          return BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
+            child: GestureDetector(
+              onTap: () => Navigator.of(ctx).pop(),
+              child: Container(
+                color: const Color(0xFF5D201C).withValues(alpha: 0.4),
+                child: Center(
+                  child: Container(
+                    width: 260.w,
+                    height: 260.h,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(color: Colors.white, width: 4.w),
+                      image: DecorationImage(
+                        image: (fotoPath.startsWith('http')
+                            ? NetworkImage(fotoPath)
+                            : FileImage(File(fotoPath))) as ImageProvider,
+                        fit: BoxFit.cover,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF5D201C).withValues(alpha: 0.3),
+                          blurRadius: 30.r,
+                          offset: Offset(0, 10.h),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
 
   void _mostrarOpcoesConta(BuildContext context) {
     showModalBottomSheet(
@@ -69,6 +126,7 @@ class PerfilTab extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(ctx);
                   context.read<CadastroController>().limparDados();
+                  context.read<UserProvider>().limparUsuario();
                   context.go('/');
                 },
                 child: Padding(
@@ -196,6 +254,8 @@ class PerfilTab extends StatelessWidget {
                       fontSize: 12.sp,
                       fontFamily: 'Roboto',
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -209,7 +269,8 @@ class PerfilTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final email = context.watch<CadastroController>().email;
+    final userProvider = context.watch<UserProvider>();
+    final temFoto = userProvider.fotoPerfil != null && userProvider.fotoPerfil!.isNotEmpty;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -267,52 +328,70 @@ class PerfilTab extends StatelessWidget {
           ),
           SizedBox(height: 32.h),
 
-          // Header com foto de perfil e dados
+          // Header com foto de perfil e dados do parceiro
           Row(
             children: [
               Stack(
                 children: [
-                  Container(
-                    width: 80.w,
-                    height: 80.h,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF5D201C).withValues(alpha: 0.1),
-                          blurRadius: 10.r,
-                          offset: Offset(0, 4.h),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.two_wheeler_rounded,
-                        size: 44.r,
-                        color: AppColors.primaria,
+                  GestureDetector(
+                    onLongPress: () => _mostrarPreviewFoto(context, userProvider.fotoPerfil),
+                    onLongPressUp: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 80.w,
+                      height: 80.h,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF5D201C).withValues(alpha: 0.1),
+                            blurRadius: 10.r,
+                            offset: Offset(0, 4.h),
+                          ),
+                        ],
+                      ),
+                      child: ClipOval(
+                        child: temFoto
+                            ? (userProvider.fotoPerfil!.startsWith('http')
+                                ? Image.network(userProvider.fotoPerfil!, fit: BoxFit.cover)
+                                : Image.file(File(userProvider.fotoPerfil!), fit: BoxFit.cover))
+                            : Center(
+                                child: Icon(
+                                  Icons.two_wheeler_rounded,
+                                  size: 44.r,
+                                  color: AppColors.primaria,
+                                ),
+                              ),
                       ),
                     ),
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
-                    child: Container(
-                      padding: EdgeInsets.all(4.w),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EditarFotoPage()),
+                        );
+                      },
                       child: Container(
                         padding: EdgeInsets.all(4.w),
                         decoration: const BoxDecoration(
-                          color: Color(0xFF5D201C),
+                          color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.edit,
-                          size: 12,
-                          color: Colors.white,
+                        child: Container(
+                          padding: EdgeInsets.all(4.w),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF5D201C),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -325,7 +404,7 @@ class PerfilTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Parceiro Motoca',
+                      userProvider.nome.isNotEmpty ? userProvider.nome : 'Parceiro Motoca',
                       style: TextStyle(
                         fontSize: 22.sp,
                         fontWeight: FontWeight.bold,
@@ -344,9 +423,7 @@ class PerfilTab extends StatelessWidget {
                         SizedBox(width: 4.w),
                         Expanded(
                           child: Text(
-                            email.isNotEmpty
-                                ? email
-                                : 'Honda CG 160 Fan • Placa ABC-1234',
+                            '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}',
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               fontSize: 12.sp,
@@ -369,11 +446,11 @@ class PerfilTab extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatItem('28', 'Entregas'),
+              _buildStatItem('${userProvider.entregas}', 'Entregas'),
               Container(height: 30.h, width: 1.w, color: Colors.grey.shade300),
-              _buildStatItem('4.9', 'Avaliação'),
+              _buildStatItem('${userProvider.avaliacao}', 'Avaliação'),
               Container(height: 30.h, width: 1.w, color: Colors.grey.shade300),
-              _buildStatItem('R\$ 342', 'Ganhos'),
+              _buildStatItem('R\$ ${userProvider.ganhos.toStringAsFixed(0)}', 'Ganhos'),
             ],
           ),
           SizedBox(height: 36.h),
@@ -407,9 +484,12 @@ class PerfilTab extends StatelessWidget {
                   icon: Icons.person_outline,
                   iconColor: const Color(0xFFFF6961),
                   title: 'Dados Pessoais',
-                  subtitle: 'Nome, CPF, CNH e contato...',
+                  subtitle: '${userProvider.nome} • CPF: ${userProvider.cpf}',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const DadosPessoaisTab()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const DadosPessoaisTab()),
+                    );
                   },
                 ),
                 Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
@@ -417,16 +497,26 @@ class PerfilTab extends StatelessWidget {
                   icon: Icons.two_wheeler_outlined,
                   iconColor: const Color(0xFFFF6961),
                   title: 'Veículo & Moto',
-                  subtitle: 'Honda CG 160 • Placa ABC-1234...',
-                  onTap: () {},
+                  subtitle: '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EditarVeiculoPage()),
+                    );
+                  },
                 ),
                 Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
                 _buildAccountRow(
                   icon: Icons.credit_card_outlined,
                   iconColor: const Color(0xFFFF6961),
                   title: 'Dados Bancários',
-                  subtitle: 'Chave PIX e conta para repasses...',
-                  onTap: () {},
+                  subtitle: 'PIX (${userProvider.tipoChavePix}): ${userProvider.chavePix}',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const EditarDadosBancariosPage()),
+                    );
+                  },
                 ),
               ],
             ),
@@ -463,7 +553,11 @@ class PerfilTab extends StatelessWidget {
                   iconColor: const Color(0xFFFF6961),
                   title: 'Notificações',
                   subtitle: 'Alertas sonoros de novos pedidos',
-                  onTap: () {},
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Notificações de pedidos ativadas.')),
+                    );
+                  },
                 ),
                 Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
                 _buildAccountRow(
@@ -471,7 +565,11 @@ class PerfilTab extends StatelessWidget {
                   iconColor: const Color(0xFFFF6961),
                   title: 'Suporte & Ajuda',
                   subtitle: 'Falar com a equipe Nhac',
-                  onTap: () {},
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Suporte ao entregador disponível 24h.')),
+                    );
+                  },
                 ),
                 Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
                 _buildAccountRow(
@@ -481,6 +579,7 @@ class PerfilTab extends StatelessWidget {
                   subtitle: 'Desconectar deste celular',
                   onTap: () {
                     context.read<CadastroController>().limparDados();
+                    context.read<UserProvider>().limparUsuario();
                     context.go('/');
                   },
                 ),
