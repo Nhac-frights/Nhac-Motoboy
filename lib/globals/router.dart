@@ -5,6 +5,7 @@ import '../pages/auth/continuar_senha.dart';
 import '../pages/auth/insira_telefone.dart';
 import '../pages/auth/verificacao_numero.dart';
 import '../pages/bem_vindo_motoca.dart';
+import '../pages/cadastro_motoboy_page.dart';
 import '../pages/email_motoca.dart';
 import '../pages/home/home_motoca_page.dart';
 import '../pages/home/tabs/profile/dados_pessoais_tab.dart';
@@ -224,6 +225,13 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => _buildPage(
         key: state.pageKey,
         child: const RotaEntregaPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/cadastro-motoboy',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const CadastroMotoboyPage(),
       ),
     ),
   ],
