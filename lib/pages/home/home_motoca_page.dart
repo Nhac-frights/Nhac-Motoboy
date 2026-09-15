@@ -24,7 +24,7 @@ class HomeMotocaPage extends StatefulWidget {
 class _HomeMotocaPageState extends State<HomeMotocaPage> {
   int _selectedIndex = 0;
   late final PageController _pageController;
-  bool _estaOnline = false;
+  
 
   @override
   void initState() {
