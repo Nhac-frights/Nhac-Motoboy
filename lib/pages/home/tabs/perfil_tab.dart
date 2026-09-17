@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../controllers/cadastro_controller.dart';
+import '../../../controllers/entrega_provider.dart';
 import '../../../controllers/user_provider.dart';
 import '../../../globals/theme_colors.dart';
 import 'profile/dados_pessoais_tab.dart';
@@ -493,15 +494,26 @@ class PerfilTab extends StatelessWidget {
                   },
                 ),
                 Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
-                _buildAccountRow(
-                  icon: Icons.two_wheeler_outlined,
-                  iconColor: const Color(0xFFFF6961),
-                  title: 'Veículo & Moto',
-                  subtitle: '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const EditarVeiculoPage()),
+                Consumer<EntregaProvider>(
+                  builder: (context, entregaProvider, _) {
+                    final isCadastrado = entregaProvider.isCadastrado;
+                    return _buildAccountRow(
+                      icon: Icons.two_wheeler_outlined,
+                      iconColor: const Color(0xFFFF6961),
+                      title: 'Veículo & Moto',
+                      subtitle: isCadastrado 
+                          ? '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}'
+                          : 'Toque para cadastrar seu veículo',
+                      onTap: () {
+                        if (isCadastrado) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const EditarVeiculoPage()),
+                          );
+                        } else {
+                          context.push('/cadastro-motoboy');
+                        }
+                      },
                     );
                   },
                 ),

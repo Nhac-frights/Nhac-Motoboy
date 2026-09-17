@@ -88,4 +88,45 @@ class Validators {
 
     return true;
   }
+
+  /// Valida CNH (Carteira Nacional de Habilitação)
+  /// A CNH deve ter 11 dígitos numéricos
+  static String? validarCNH(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'CNH obrigatória';
+    }
+    final cnh = value.replaceAll(RegExp(r'\D'), '');
+    if (cnh.length != 11) {
+      return 'A CNH deve ter 11 dígitos';
+    }
+    if (RegExp(r'^(\d)\1{10}$').hasMatch(cnh)) {
+      return 'CNH inválida';
+    }
+    return null;
+  }
+
+  /// Valida placa de veículo no formato brasileiro (antigo e Mercosul)
+  /// Antigo: ABC-1234 (3 letras, traço, 4 números)
+  /// Mercosul: ABC1C34 (3 letras, 1 número, 1 letra, 2 números)
+  static String? validarPlaca(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Placa obrigatória';
+    }
+    final placa = value.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+    
+    if (placa.length != 7) {
+      return 'A placa deve ter 7 caracteres';
+    }
+    
+    // Validação padrão antigo: LLLNNNN (3 letras + 4 números)
+    final padraoAntigo = RegExp(r'^[A-Z]{3}[0-9]{4}$');
+    // Validação Mercosul: LLNLNLL (letras e números em posições específicas)
+    final padraoMercosul = RegExp(r'^[A-Z]{3}[0-9][A-Z][0-9]{2}$');
+    
+    if (!padraoAntigo.hasMatch(placa) && !padraoMercosul.hasMatch(placa)) {
+      return 'Formato de placa inválido';
+    }
+    
+    return null;
+  }
 }
