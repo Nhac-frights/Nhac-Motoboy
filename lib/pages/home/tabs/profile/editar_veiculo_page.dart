@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../components/botoes/botao_largo_nhac.dart';
 import '../../../../components/nhac_input_field.dart';
+import '../../../../controllers/entrega_provider.dart';
 import '../../../../controllers/user_provider.dart';
 import '../../../../globals/theme_colors.dart';
 import '../../../../globals/ui_utils.dart';
@@ -20,6 +21,8 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
   late final TextEditingController _modeloController;
   late final TextEditingController _placaController;
   late final TextEditingController _corController;
+  
+  String _tipoVeiculoSelecionado = 'MOTO'; // MOTO | BICICLETA | CARRO
 
   bool _isLoading = false;
   bool _formValido = false;
@@ -59,24 +62,33 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
     });
   }
 
-  Future<void> _salvarVeiculo() async {
+  Future<void> _cadastrarEntregador() async {
     try {
       setState(() => _isLoading = true);
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (!mounted) return;
+      
+      final entregaProvider = context.read<EntregaProvider>();
+      final resultado = await entregaProvider.cadastrarEntregador(
+        cnh: context.read<UserProvider>().cnh,
+        placaVeiculo: _placaController.text.trim().toUpperCase(),
+        tipoVeiculo: _tipoVeiculoSelecionado,
+      );
 
+      if (!mounted) return;
+      
+      // Atualiza o UserProvider com os dados do veículo
       context.read<UserProvider>().atualizarVeiculo(
             modelo: _modeloController.text.trim(),
-            placa: _placaController.text.trim(),
+            placa: _placaController.text.trim().toUpperCase(),
             cor: _corController.text.trim(),
           );
 
-      if (!mounted) return;
-      context.showSuccess('Dados do veículo atualizados com sucesso!');
+      context.showSuccess('Cadastro realizado com sucesso! Você já pode receber pedidos.');
       context.pop();
     } catch (e) {
       if (!mounted) return;
-      context.showError(e.toString());
+      // Trata erro de cadastro duplicado ou outros erros de negócio
+      final mensagemErro = e.toString().replaceAll('Exception: ', '');
+      context.showError(mensagemErro);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -84,6 +96,9 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final entregaProvider = context.watch<EntregaProvider>();
+    final isCadastrado = entregaProvider.isCadastrado;
+
     return Scaffold(
       backgroundColor: AppColors.fundo,
       appBar: AppBar(
@@ -92,6 +107,15 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF5D201C), size: 20),
           onPressed: () => context.pop(),
+        ),
+        title: Text(
+          isCadastrado ? 'Veículo & Moto' : 'Cadastro de Entregador',
+          style: TextStyle(
+            fontSize: 18.sp,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF5D201C),
+            fontFamily: 'Roboto',
+          ),
         ),
       ),
       body: SafeArea(
@@ -108,7 +132,7 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
                     children: [
                       SizedBox(height: 16.h),
                       Text(
-                        'Veículo & Moto',
+                        isCadastrado ? 'Atualize os dados da sua motocicleta' : 'Cadastre-se como entregador',
                         style: TextStyle(
                           fontSize: 28.sp,
                           fontWeight: FontWeight.bold,
@@ -119,7 +143,9 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
                       ),
                       SizedBox(height: 12.h),
                       Text(
-                        'Atualize os dados da sua motocicleta para identificação nos estabelecimentos e nas entregas.',
+                        isCadastrado
+                            ? 'Atualize os dados da sua motocicleta para identificação nos estabelecimentos e nas entregas.'
+                            : 'Informe os dados do seu veículo para começar a receber pedidos de entrega.',
                         style: TextStyle(
                           fontSize: 16.sp,
                           color: Colors.grey.shade800,
@@ -128,8 +154,55 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
                         ),
                       ),
                       SizedBox(height: 28.h),
+                      
+                      // Seletor de tipo de veículo (apenas para cadastro)
+                      if (!isCadastrado) ...[
+                        Text(
+                          'Tipo de Veículo',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF5D201C),
+                            fontFamily: 'Roboto',
+                          ),
+                        ),
+                        SizedBox(height: 8.h),
+                        Container(
+                          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12.r),
+                            border: Border.all(color: AppColors.bordaInativa),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _tipoVeiculoSelecionado,
+                              isExpanded: true,
+                              icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF5D201C)),
+                              style: TextStyle(
+                                fontSize: 16.sp,
+                                color: const Color(0xFF5D201C),
+                                fontFamily: 'Roboto',
+                                fontWeight: FontWeight.w600,
+                              ),
+                              items: const [
+                                DropdownMenuItem(value: 'MOTO', child: Text('Motocicleta')),
+                                DropdownMenuItem(value: 'BICICLETA', child: Text('Bicicleta')),
+                                DropdownMenuItem(value: 'CARRO', child: Text('Carro')),
+                              ],
+                              onChanged: (valor) {
+                                setState(() {
+                                  _tipoVeiculoSelecionado = valor!;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20.h),
+                      ],
+                      
                       Text(
-                        'Modelo da Moto',
+                        'Modelo do Veículo',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -151,7 +224,7 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
                       ),
                       SizedBox(height: 20.h),
                       Text(
-                        'Placa da Moto',
+                        'Placa do Veículo',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -173,7 +246,7 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
                       ),
                       SizedBox(height: 20.h),
                       Text(
-                        'Cor da Moto',
+                        'Cor do Veículo',
                         style: TextStyle(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
@@ -201,9 +274,11 @@ class _EditarVeiculoPageState extends State<EditarVeiculoPage> {
             Padding(
               padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 32.h, top: 16.h),
               child: BotaoLargoNhac(
-                texto: 'Salvar alterações',
+                texto: isCadastrado ? 'Salvar alterações' : 'Cadastrar como entregador',
                 carregando: _isLoading,
-                onPressed: _formValido ? _salvarVeiculo : null,
+                onPressed: _formValido 
+                    ? (isCadastrado ? null : _cadastrarEntregador)
+                    : null,
               ),
             ),
           ],

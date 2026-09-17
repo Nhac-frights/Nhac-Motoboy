@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/entrega_ativa_model.dart';
 import '../models/oferta_entrega_model.dart';
 import '../models/rota_model.dart';
+import '../models/entregador_cadastro_model.dart';
 import '../services/entregador_service.dart';
 
 class EntregaProvider extends ChangeNotifier {
@@ -11,6 +12,8 @@ class EntregaProvider extends ChangeNotifier {
 
   bool _estaOnline = false;
   bool _isLoading = false;
+  bool _isCadastrado = false;
+  EntregadorCadastroModel? _perfilEntregador;
   OfertaEntregaModel? _ofertaAtual;
   EntregaAtivaModel? _entregaAtiva;
   RotaModel? _rotaAtual;
@@ -28,6 +31,8 @@ class EntregaProvider extends ChangeNotifier {
 
   bool get estaOnline => _estaOnline;
   bool get isLoading => _isLoading;
+  bool get isCadastrado => _isCadastrado;
+  EntregadorCadastroModel? get perfilEntregador => _perfilEntregador;
   OfertaEntregaModel? get ofertaAtual => _ofertaAtual;
   EntregaAtivaModel? get entregaAtiva => _entregaAtiva;
   RotaModel? get rotaAtual => _rotaAtual;
@@ -35,11 +40,49 @@ class EntregaProvider extends ChangeNotifier {
   double get latitudeAtual => _latitudeAtual;
   double get longitudeAtual => _longitudeAtual;
 
+  /// Realiza o cadastro do entregador (Fase 5)
+  Future<EntregadorCadastroModel> cadastrarEntregador({
+    required String cnh,
+    required String placaVeiculo,
+    required String tipoVeiculo,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final resultado = await _service.cadastrarEntregador(
+        cnh: cnh,
+        placaVeiculo: placaVeiculo,
+        tipoVeiculo: tipoVeiculo,
+      );
+      _perfilEntregador = resultado;
+      _isCadastrado = true;
+      return resultado;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Verifica se o usuário já tem cadastro como entregador
+  Future<void> verificarCadastro() async {
+    try {
+      _perfilEntregador = await _service.obterPerfil();
+      _isCadastrado = _perfilEntregador != null;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao verificar cadastro: $e');
+      _isCadastrado = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> alternarStatusOnline(bool novoStatus) async {
     _isLoading = true;
     notifyListeners();
 
-    final sucesso = await _service.atualizarStatus(novoStatus);
+    final statusOperacional = novoStatus ? 'ONLINE' : 'OFFLINE';
+    final sucesso = await _service.atualizarStatus(statusOperacional);
     _isLoading = false;
 
     if (sucesso || !novoStatus) {

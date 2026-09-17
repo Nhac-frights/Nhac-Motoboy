@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../models/entrega_ativa_model.dart';
 import '../models/oferta_entrega_model.dart';
 import '../models/rota_model.dart';
+import '../models/entregador_cadastro_model.dart';
 import 'api_config.dart';
 
 class EntregadorService {
@@ -12,19 +13,91 @@ class EntregadorService {
 
   EntregadorService({http.Client? client}) : _client = client ?? http.Client();
 
+  /// Realiza o cadastro do entregador (Fase 5 - Contrato frontend/mobile)
+  /// POST /api/v1/entregador/cadastro
+  /// Retorna 201 com EntregadorCadastroModel ou lança exceção com ErroPadraoDTO
+  Future<EntregadorCadastroModel> cadastrarEntregador({
+    required String cnh,
+    required String placaVeiculo,
+    required String tipoVeiculo, // MOTO | BICICLETA | CARRO
+  }) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/cadastro');
+    try {
+      final response = await _client.post(
+        url,
+        headers: ApiConfig.headers,
+        body: jsonEncode({
+          'cnh': cnh,
+          'placaVeiculo': placaVeiculo,
+          'tipoVeiculo': tipoVeiculo,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        return EntregadorCadastroModel.fromJson(dados);
+      } else if (response.statusCode == 400) {
+        final Map<String, dynamic> erro =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        final erroDto = ErroPadraoDTO.fromJson(erro);
+        throw Exception(erroDto.mensagem);
+      } else {
+        throw Exception('Erro ao cadastrar entregador: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Erro ao cadastrar entregador: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtém o perfil do entregador logado
+  /// GET /api/v1/entregador/perfil
+  /// Retorna 404 se o usuário não tiver cadastro como entregador
+  Future<EntregadorCadastroModel?> obterPerfil() async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/perfil');
+    try {
+      final response = await _client.get(url, headers: ApiConfig.headers);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        return EntregadorCadastroModel.fromJson(dados);
+      } else if (response.statusCode == 404) {
+        // Usuário ainda não tem cadastro como entregador
+        return null;
+      } else {
+        debugPrint('Erro ao obter perfil: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      debugPrint('Erro ao obter perfil do entregador: $e');
+      rethrow;
+    }
+  }
+
   /// Altera o status operacional do motoboy no backend (ONLINE ou OFFLINE)
-  Future<bool> atualizarStatus(bool estaOnline) async {
+  /// PATCH /api/v1/entregador/status
+  Future<bool> atualizarStatus(String statusOperacional) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/status');
     try {
       final response = await _client.patch(
         url,
         headers: ApiConfig.headers,
         body: jsonEncode({
-          'statusOperacional': estaOnline ? 'ONLINE' : 'OFFLINE',
+          'statusOperacional': statusOperacional,
         }),
       );
 
       return response.statusCode == 200;
+    } on http.ClientException catch (e) {
+      // Trata erro 404 (IdNaoEncontradoException) - usuário não tem cadastro
+      if (e is http.ClientException && e.toString().contains('404')) {
+        debugPrint('Usuário não possui cadastro como entregador');
+        rethrow;
+      }
+      debugPrint('Erro ao atualizar status do entregador: $e');
+      return false;
     } catch (e) {
       debugPrint('Erro ao atualizar status do entregador: $e');
       return false;
@@ -32,6 +105,7 @@ class EntregadorService {
   }
 
   /// Heartbeat periódico de GPS (envia latitude e longitude atuais)
+  /// PATCH /api/v1/entregador/localizacao
   Future<bool> enviarLocalizacao(double latitude, double longitude) async {
     final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/localizacao');
     try {
