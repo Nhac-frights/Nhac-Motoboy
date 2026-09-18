@@ -6,6 +6,8 @@ import '../models/entrega_ativa_model.dart';
 import '../models/oferta_entrega_model.dart';
 import '../models/rota_model.dart';
 import '../models/entregador_cadastro_model.dart';
+import '../models/historico_entrega_model.dart';
+import '../models/ganhos_entregador_model.dart';
 import 'api_config.dart';
 
 class EntregadorService {
@@ -201,6 +203,85 @@ class EntregadorService {
       return null;
     } catch (e) {
       debugPrint('Erro ao obter rota de entrega: $e');
+      return null;
+    }
+  }
+
+  /// Confirma a retirada do pedido na loja.
+  /// POST /api/v1/entregas/{pedidoId}/coletar
+  /// Move PREPARANDO -> SAIU_ENTREGA no backend. Sem chamar isto, a corrida
+  /// nunca aparecia como "saiu para entrega" de verdade para cliente/loja.
+  Future<EntregaAtivaModel?> coletarPedido(String pedidoId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/$pedidoId/coletar');
+    try {
+      final response = await _client.post(url, headers: ApiConfig.headers);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        return EntregaAtivaModel.fromJson(dados);
+      }
+      debugPrint('Erro ao coletar pedido: ${response.statusCode} ${response.body}');
+      return null;
+    } catch (e) {
+      debugPrint('Erro ao coletar pedido: $e');
+      return null;
+    }
+  }
+
+  /// Dá baixa na entrega (SAIU_ENTREGA -> ENTREGUE) e libera o entregador
+  /// para voltar a receber ofertas.
+  /// POST /api/v1/entregas/{pedidoId}/concluir
+  ///
+  /// Antes desta chamada existir, EntregaProvider.concluirEntrega() só
+  /// limpava o estado local — o pedido nunca terminava no backend e o
+  /// entregador ficava travado em EM_ENTREGA, sem receber novas corridas.
+  Future<bool> concluirEntrega(String pedidoId) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/$pedidoId/concluir');
+    try {
+      final response = await _client.post(url, headers: ApiConfig.headers);
+      return response.statusCode == 204 || response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Erro ao concluir entrega: $e');
+      return false;
+    }
+  }
+
+  /// Histórico paginado de corridas do entregador logado.
+  /// GET /api/v1/entregador/entregas?status=&page=&size=
+  /// status é opcional (ex.: 'ENTREGUE' para ver só as concluídas).
+  Future<HistoricoEntregasPagina> buscarHistorico({String? status, int page = 0, int size = 20}) async {
+    final query = {
+      'page': '$page',
+      'size': '$size',
+      if (status != null) 'status': status,
+    };
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/entregas').replace(queryParameters: query);
+    try {
+      final response = await _client.get(url, headers: ApiConfig.headers);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        return HistoricoEntregasPagina.fromJson(dados);
+      }
+      return HistoricoEntregasPagina.vazia();
+    } catch (e) {
+      debugPrint('Erro ao buscar histórico de entregas: $e');
+      return HistoricoEntregasPagina.vazia();
+    }
+  }
+
+  /// Resumo de ganhos por período.
+  /// GET /api/v1/entregador/ganhos?periodo=HOJE|SETE_DIAS|TRINTA_DIAS
+  Future<GanhosEntregadorModel?> buscarGanhos({String periodo = 'HOJE'}) async {
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/ganhos')
+        .replace(queryParameters: {'periodo': periodo});
+    try {
+      final response = await _client.get(url, headers: ApiConfig.headers);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        return GanhosEntregadorModel.fromJson(dados);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Erro ao buscar ganhos: $e');
       return null;
     }
   }

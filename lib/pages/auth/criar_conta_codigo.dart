@@ -11,16 +11,20 @@ import '../../controllers/cadastro_controller.dart';
 import '../../globals/theme_colors.dart';
 import '../../globals/ui_utils.dart';
 import '../../services/auth_service.dart';
-import '../../services/api_config.dart';
 
-class VerificacaoNumeroPage extends StatefulWidget {
-  const VerificacaoNumeroPage({super.key});
+/// Segunda etapa do cadastro por e-mail (a primeira, EmailMotocaPage, já
+/// disparou o código via enviarCodigoCadastro antes de navegar pra cá).
+///
+/// Espelha VerificacaoNumeroPage (fluxo por SMS) — mesmo componente de PIN,
+/// mesmo timer de reenvio — só troca o backend chamado.
+class CriarContaCodigoPage extends StatefulWidget {
+  const CriarContaCodigoPage({super.key});
 
   @override
-  State<VerificacaoNumeroPage> createState() => _VerificacaoNumeroPageState();
+  State<CriarContaCodigoPage> createState() => _CriarContaCodigoPageState();
 }
 
-class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
+class _CriarContaCodigoPageState extends State<CriarContaCodigoPage> {
   final TextEditingController _pinController = TextEditingController();
   final AuthService _authService = AuthService();
 
@@ -49,37 +53,24 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
         return;
       }
       if (_tempoRestante > 0) {
-        setState(() {
-          _tempoRestante--;
-        });
+        setState(() => _tempoRestante--);
       } else {
-        setState(() {
-          _podeReenviar = true;
-        });
+        setState(() => _podeReenviar = true);
         timer.cancel();
       }
     });
   }
 
-  void _reenviarCodigo() {
+  Future<void> _reenviarCodigo() async {
     if (!_podeReenviar) return;
-
+    final email = context.read<CadastroController>().email;
     try {
-      final telefone = context.read<CadastroController>().telefone;
-      final telefoneFormatado =
-          '+55${telefone.replaceAll(RegExp(r'[^0-9]'), '')}';
-
-      _authService.enviarCodigoTelefone(telefoneFormatado);
+      await _authService.enviarCodigoCadastro(email);
       _iniciarTimer();
-
-      if (mounted) {
-        context.showSuccess('Código reenviado com sucesso via SMS!');
-      }
+      if (mounted) context.showSuccess('Código reenviado para $email!');
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-        });
+        setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
       }
     }
   }
@@ -94,36 +85,23 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
   Future<void> _confirmarCodigo() async {
     if (!_codigoValido) return;
 
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = null;
-      });
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-      final cadastroController = context.read<CadastroController>();
-      final telefone = cadastroController.telefone;
-      final telefoneFormatado =
-          '+55${telefone.replaceAll(RegExp(r'[^0-9]'), '')}';
+    try {
+      final email = context.read<CadastroController>().email;
       final codigo = _pinController.text.trim();
 
-      // Realiza login com SMS (ou cadastro se for primeiro acesso)
-      final token = await _authService.loginComSms(
-        telefone: telefoneFormatado,
-        codigo: codigo,
-      );
-
-      // Salva o token de autenticação (persistido em disco - ver ApiConfig.init())
-      await ApiConfig.setAuthToken(token);
+      await _authService.confirmarEmailCadastro(email, codigo);
 
       if (!mounted) return;
-
-      context.showSuccess('Número verificado com sucesso!');
-      context.go('/cadastro-motoboy');
+      context.showSuccess('E-mail verificado!');
+      context.push('/criar-conta-dados');
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-      });
+      setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -131,7 +109,7 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
 
   @override
   Widget build(BuildContext context) {
-    final telefone = context.watch<CadastroController>().telefone;
+    final email = context.watch<CadastroController>().email;
 
     return Scaffold(
       backgroundColor: AppColors.fundo,
@@ -149,12 +127,10 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
                     children: [
                       const SetaVoltar(),
                       SizedBox(height: 20.h),
-                      Text('Digite o código', style: AppTextStyles.titulo()),
+                      Text('Confirme seu e-mail', style: AppTextStyles.titulo()),
                       SizedBox(height: 8.h),
                       Text(
-                        telefone.isNotEmpty
-                            ? 'Insira o código de 6 dígitos que enviamos para o número $telefone'
-                            : 'Insira o código de 6 dígitos que enviamos por SMS.',
+                        'Insira o código de 6 dígitos que enviamos para $email',
                         style: AppTextStyles.subtitulo(),
                       ),
                       SizedBox(height: 32.h),
@@ -187,13 +163,9 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
                         ),
                         enableActiveFill: true,
                         onChanged: (valor) {
-                          setState(() {
-                            _codigoValido = valor.trim().length == 6;
-                          });
+                          setState(() => _codigoValido = valor.trim().length == 6);
                         },
-                        onCompleted: (valor) {
-                          _confirmarCodigo();
-                        },
+                        onCompleted: (valor) => _confirmarCodigo(),
                       ),
                       SizedBox(height: 20.h),
                       Center(
@@ -201,13 +173,11 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
                           onPressed: _podeReenviar ? _reenviarCodigo : null,
                           child: Text(
                             _podeReenviar
-                                ? 'Reenviar código por SMS'
+                                ? 'Reenviar código por e-mail'
                                 : 'Reenviar código em 00:${_tempoRestante.toString().padLeft(2, '0')}',
                             style: TextStyle(
                               fontFamily: 'Roboto',
-                              color: _podeReenviar
-                                  ? AppColors.primaria
-                                  : AppColors.desabilitado,
+                              color: _podeReenviar ? AppColors.primaria : AppColors.desabilitado,
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
                             ),
@@ -219,20 +189,12 @@ class _VerificacaoNumeroPageState extends State<VerificacaoNumeroPage> {
                           padding: EdgeInsets.only(top: 16.h),
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Colors.red,
-                                size: 16.r,
-                              ),
+                              Icon(Icons.error_outline, color: Colors.red, size: 16.r),
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 13.sp,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: TextStyle(color: Colors.red, fontSize: 13.sp, fontWeight: FontWeight.w500),
                                 ),
                               ),
                             ],

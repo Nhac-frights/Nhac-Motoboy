@@ -7,14 +7,65 @@ import '../../../components/entrega/mapa_rota_widget.dart';
 import '../../../controllers/entrega_provider.dart';
 import '../../../globals/theme_colors.dart';
 
-class RotaEntregaPage extends StatelessWidget {
+class RotaEntregaPage extends StatefulWidget {
   const RotaEntregaPage({super.key});
+
+  @override
+  State<RotaEntregaPage> createState() => _RotaEntregaPageState();
+}
+
+class _RotaEntregaPageState extends State<RotaEntregaPage> {
+  bool _processando = false;
+
+  /// Confirma a retirada na loja (PREPARANDO -> SAIU_ENTREGA no backend).
+  /// Antes desta tela ter dois estados, o motoboy só via "CONCLUIR ENTREGA"
+  /// mesmo antes de sair da loja - o pedido nunca era marcado como
+  /// efetivamente coletado.
+  Future<void> _confirmarRetirada(EntregaProvider provider) async {
+    setState(() => _processando = true);
+    final sucesso = await provider.confirmarColeta();
+    if (!mounted) return;
+    setState(() => _processando = false);
+
+    if (sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Retirada confirmada! Pode seguir para o cliente.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível confirmar a retirada. Tente novamente.')),
+      );
+    }
+  }
+
+  /// Dá baixa na entrega (SAIU_ENTREGA -> ENTREGUE). Antes, este botão só
+  /// limpava o estado local do app e nunca avisava o backend - o pedido
+  /// nunca terminava de verdade e o motoboy ficava travado sem receber
+  /// novas ofertas.
+  Future<void> _concluirEntrega(EntregaProvider provider) async {
+    setState(() => _processando = true);
+    final sucesso = await provider.concluirEntregaAtual();
+    if (!mounted) return;
+    setState(() => _processando = false);
+
+    if (sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Entrega concluída com sucesso! Parabéns! 🛵🎉')),
+      );
+      context.pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível concluir a entrega. Tente novamente.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final entregaProvider = context.watch<EntregaProvider>();
     final entrega = entregaProvider.entregaAtiva;
     final rota = entregaProvider.rotaAtual;
+    final coletada = entregaProvider.entregaColetada;
 
     if (entrega == null) {
       return Scaffold(
@@ -50,11 +101,11 @@ class RotaEntregaPage extends StatelessWidget {
               ),
             ),
             Text(
-              'Em transporte',
+              coletada ? 'Em transporte' : 'A caminho da loja',
               style: TextStyle(
                 fontFamily: 'Roboto',
                 fontSize: 12.sp,
-                color: const Color(0xFF2E7D32),
+                color: coletada ? const Color(0xFF2E7D32) : AppColors.primaria,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -95,6 +146,7 @@ class RotaEntregaPage extends StatelessWidget {
               iconeCor: AppColors.primaria,
               nome: entrega.lojaNome,
               detalhe: entrega.lojaEndereco,
+              destaque: !coletada,
             ),
 
             SizedBox(height: 14.h),
@@ -107,6 +159,7 @@ class RotaEntregaPage extends StatelessWidget {
               nome: entrega.clienteNome,
               detalhe: entrega.enderecoEntrega?.formatado ?? 'Endereço não informado',
               telefone: entrega.clienteTelefone,
+              destaque: coletada,
             ),
 
             SizedBox(height: 14.h),
@@ -172,17 +225,24 @@ class RotaEntregaPage extends StatelessWidget {
 
             SizedBox(height: 24.h),
 
-            // Botão de Concluir Entrega
+            // Botão muda conforme a etapa: primeiro confirmar retirada na
+            // loja, só depois concluir a entrega no cliente.
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: 16.h),
-                backgroundColor: const Color(0xFF2E7D32),
+                backgroundColor: coletada ? const Color(0xFF2E7D32) : AppColors.primaria,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
                 elevation: 0,
               ),
-              icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+              icon: _processando
+                  ? SizedBox(
+                      width: 18.r,
+                      height: 18.r,
+                      child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : Icon(coletada ? Icons.check_circle_rounded : Icons.storefront_rounded, color: Colors.white),
               label: Text(
-                'CONCLUIR ENTREGA',
+                coletada ? 'CONCLUIR ENTREGA' : 'CONFIRMAR RETIRADA NA LOJA',
                 style: TextStyle(
                   fontFamily: 'Roboto',
                   fontSize: 16.sp,
@@ -190,13 +250,9 @@ class RotaEntregaPage extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              onPressed: () {
-                entregaProvider.concluirEntrega();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Entrega concluída com sucesso! Parabéns! 🛵🎉')),
-                );
-                context.pop();
-              },
+              onPressed: _processando
+                  ? null
+                  : () => coletada ? _concluirEntrega(entregaProvider) : _confirmarRetirada(entregaProvider),
             ),
           ],
         ),
@@ -211,12 +267,14 @@ class RotaEntregaPage extends StatelessWidget {
     required String nome,
     required String detalhe,
     String? telefone,
+    bool destaque = false,
   }) {
     return Container(
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16.r),
+        border: destaque ? Border.all(color: iconeCor, width: 1.5.w) : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),

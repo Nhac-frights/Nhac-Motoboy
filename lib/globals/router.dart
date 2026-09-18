@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../services/api_config.dart';
 import '../pages/auth/continuar_senha.dart';
+import '../pages/auth/criar_conta_codigo.dart';
+import '../pages/auth/criar_conta_dados.dart';
 import '../pages/auth/insira_telefone.dart';
 import '../pages/auth/verificacao_numero.dart';
 import '../pages/bem_vindo_motoca.dart';
@@ -107,6 +110,34 @@ Page _buildPage({required LocalKey key, required Widget child}) {
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
+  // Restaura sessão: quem já tem token salvo (ver ApiConfig.init(), chamado
+  // antes do runApp em main.dart) não deveria ver a tela de boas-vindas de
+  // novo — antes desta checagem, TODO reabrir do app forçava login, mesmo
+  // com um JWT ainda válido guardado.
+  //
+  // Cobre só as telas de entrada do fluxo de autenticação: não força redirect
+  // pra fora de rotas internas (ex.: perfil, edição) mesmo sem token, porque
+  // essas já lidam com erro 401 chamando a API — forçar aqui poderia
+  // interromper uma navegação legítima em andamento.
+  redirect: (context, state) {
+    final rotasDeAutenticacao = {
+      '/',
+      '/email-motoca',
+      '/continuar-senha',
+      '/criar-conta-codigo',
+      '/criar-conta-dados',
+      '/insira-telefone',
+      '/verificacao-numero',
+    };
+
+    final temSessao = ApiConfig.temSessaoSalva;
+    final indoParaAutenticacao = rotasDeAutenticacao.contains(state.matchedLocation);
+
+    if (temSessao && indoParaAutenticacao) {
+      return '/home-motoca';
+    }
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/',
@@ -127,6 +158,20 @@ final GoRouter appRouter = GoRouter(
       pageBuilder: (context, state) => _buildPage(
         key: state.pageKey,
         child: const ContinuarSenhaPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/criar-conta-codigo',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const CriarContaCodigoPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/criar-conta-dados',
+      pageBuilder: (context, state) => _buildPage(
+        key: state.pageKey,
+        child: const CriarContaDadosPage(),
       ),
     ),
     GoRoute(

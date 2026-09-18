@@ -27,12 +27,19 @@ class Validators {
     return null;
   }
 
+  /// Alinhado com a regra do backend (RegistroRequestDTO): mínimo 8
+  /// caracteres, com pelo menos uma letra e um número. Sem isso, o app
+  /// deixava o usuário enviar uma senha de 6 caracteres só de números e o
+  /// POST /auth/registrar voltava 400 sem nenhuma validação prévia na tela.
   static String? validarSenha(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Senha obrigatória';
     }
-    if (value.length < 6) {
-      return 'Mínimo de 6 caracteres';
+    if (value.length < 8) {
+      return 'Mínimo de 8 caracteres';
+    }
+    if (!RegExp(r'^(?=.*[0-9])(?=.*[a-zA-Z]).*$').hasMatch(value)) {
+      return 'Use pelo menos uma letra e um número';
     }
     return null;
   }

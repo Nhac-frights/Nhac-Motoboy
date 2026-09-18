@@ -8,7 +8,9 @@ import '../../components/home/nhac_bottom_nav_bar.dart';
 import '../../components/home/status_toggle_button.dart';
 import '../../controllers/cadastro_controller.dart';
 import '../../controllers/entrega_provider.dart';
+import '../../controllers/user_provider.dart';
 import '../../globals/theme_colors.dart';
+import '../../services/api_config.dart';
 import 'tabs/ganhos_tab.dart';
 import 'tabs/inicio_tab.dart';
 import 'tabs/pedidos_tab.dart';
@@ -30,6 +32,12 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
+    // Carrega nome/e-mail/telefone/veículo reais do backend e o resumo de
+    // ganhos - a home mostrava "Carlos da Silva" e "R$ 342,00" fixos pra
+    // qualquer motoboy, sempre, mesmo sem nenhuma entrega feita.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserProvider>().carregarDadosReais();
+    });
   }
 
   @override
@@ -82,8 +90,16 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
                     size: 24.r,
                   ),
                   tooltip: 'Sair da conta',
-                  onPressed: () {
+                  onPressed: () async {
+                    // Faltava limpar UserProvider e a sessão persistida
+                    // (ApiConfig) aqui - só CadastroController era limpo,
+                    // então o token continuava valendo (e agora, salvo em
+                    // disco, o redirect do router mandaria de volta pra
+                    // home no próximo abrir do app).
+                    await ApiConfig.limparSessao();
+                    if (!context.mounted) return;
                     context.read<CadastroController>().limparDados();
+                    context.read<UserProvider>().limparUsuario();
                     context.go('/');
                   },
                 ),

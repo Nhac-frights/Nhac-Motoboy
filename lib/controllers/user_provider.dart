@@ -1,24 +1,30 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+import '../services/entregador_service.dart';
+
 class UserProvider with ChangeNotifier {
-  String _usuarioId = 'motoca_001';
-  String _nome = 'Carlos da Silva';
-  String _email = 'carlos.motoca@nhac.com';
-  String _telefone = '(11) 98765-4321';
-  String _cpf = '123.456.789-00';
-  String _cnh = '12345678900';
-  String _veiculoModelo = 'Honda CG 160 Fan';
-  String _veiculoPlaca = 'ABC-1234';
-  String _veiculoCor = 'Vermelha';
+  final EntregadorService _service;
+
+  String _usuarioId = '';
+  String _nome = '';
+  String _email = '';
+  String _telefone = '';
+  String _cpf = '';
+  String _cnh = '';
+  String _veiculoModelo = '';
+  String _veiculoPlaca = '';
+  String _veiculoCor = '';
   String _tipoChavePix = 'CPF';
-  String _chavePix = '123.456.789-00';
+  String _chavePix = '';
   String? _fotoPerfil;
   bool _isLoading = false;
 
-  final int _entregas = 28;
-  final double _avaliacao = 4.9;
-  final double _ganhos = 342.00;
+  int _entregas = 0;
+  double _avaliacao = 5.0;
+  double _ganhos = 0.0;
+
+  UserProvider({EntregadorService? service}) : _service = service ?? EntregadorService();
 
   String get usuarioId => _usuarioId;
   String get nome => _nome;
@@ -44,6 +50,43 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Carrega nome/e-mail/telefone/veículo (GET /entregador/perfil) e o total
+  /// de ganhos e entregas do período (GET /entregador/ganhos) reais.
+  ///
+  /// Antes desta chamada, TODOS esses campos eram constantes fixas no
+  /// código-fonte ("Carlos da Silva", R$ 342,00, 28 entregas, nota 4.9) —
+  /// aparecia igual pra qualquer motoboy, sempre, independente de ter feito
+  /// alguma entrega ou não.
+  ///
+  /// cpf, cor do veículo, chave PIX e foto de perfil continuam sem endpoint
+  /// no backend do entregador hoje (só existem no domínio do lojista) — os
+  /// setters atualizarDadosBancarios/atualizarVeiculo/atualizarFotoPerfil
+  /// abaixo continuam alterando só o estado local, sem persistir nada no
+  /// servidor. Isso precisa de um endpoint novo (ex.: PUT /entregador/perfil)
+  /// antes de ser corrigido de verdade — ver relatório.
+  Future<void> carregarDadosReais() async {
+    setLoading(true);
+    try {
+      final perfil = await _service.obterPerfil();
+      if (perfil != null) {
+        _usuarioId = perfil.usuarioId;
+        _cnh = perfil.cnh ?? _cnh;
+        _veiculoPlaca = perfil.placaVeiculo ?? _veiculoPlaca;
+        _veiculoModelo = perfil.tipoVeiculo ?? _veiculoModelo;
+      }
+
+      final ganhosTotais = await _service.buscarGanhos(periodo: 'TRINTA_DIAS');
+      if (ganhosTotais != null) {
+        _ganhos = ganhosTotais.totalGanhos;
+        _entregas = ganhosTotais.totalEntregas;
+      }
+    } catch (e) {
+      debugPrint('Erro ao carregar dados reais do motoboy: $e');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   void atualizarNome(String novoNome) {
     _nome = novoNome.trim();
     notifyListeners();
@@ -59,12 +102,14 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// NÃO persiste no backend - ver nota em carregarDadosReais().
   void atualizarDocumentos({required String cpf, required String cnh}) {
     _cpf = cpf.trim();
     _cnh = cnh.trim();
     notifyListeners();
   }
 
+  /// NÃO persiste no backend - ver nota em carregarDadosReais().
   void atualizarVeiculo({
     required String modelo,
     required String placa,
@@ -76,6 +121,7 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// NÃO persiste no backend - ver nota em carregarDadosReais().
   void atualizarDadosBancarios({
     required String tipo,
     required String chave,
@@ -85,6 +131,7 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// NÃO persiste no backend - ver nota em carregarDadosReais().
   Future<void> atualizarFotoPerfil(File imagem) async {
     _fotoPerfil = imagem.path;
     notifyListeners();
@@ -95,8 +142,9 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// NÃO persiste no backend - não existe endpoint de troca de senha para
+  /// o entregador hoje.
   void atualizarSenha(String novaSenha) {
-    // Simula atualização de senha
     notifyListeners();
   }
 
@@ -122,7 +170,13 @@ class UserProvider with ChangeNotifier {
     _telefone = '';
     _cpf = '';
     _cnh = '';
+    _veiculoModelo = '';
+    _veiculoPlaca = '';
+    _veiculoCor = '';
+    _chavePix = '';
     _fotoPerfil = null;
+    _entregas = 0;
+    _ganhos = 0.0;
     notifyListeners();
   }
 }

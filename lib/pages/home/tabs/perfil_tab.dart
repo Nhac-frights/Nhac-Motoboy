@@ -9,6 +9,7 @@ import '../../../controllers/cadastro_controller.dart';
 import '../../../controllers/entrega_provider.dart';
 import '../../../controllers/user_provider.dart';
 import '../../../globals/theme_colors.dart';
+import '../../../services/api_config.dart';
 import 'profile/dados_pessoais_tab.dart';
 import 'profile/editar_dados_bancarios_page.dart';
 import 'profile/editar_foto_page.dart';
@@ -124,8 +125,14 @@ class PerfilTab extends StatelessWidget {
               ),
               SizedBox(height: 12.h),
               InkWell(
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(ctx);
+                  // Faltava isto: sem limpar a sessão persistida, o token
+                  // continuava valendo (e agora, com sessão salva em disco,
+                  // o redirect do router mandaria a pessoa direto de volta
+                  // pra home no próximo abrir do app).
+                  await ApiConfig.limparSessao();
+                  if (!context.mounted) return;
                   context.read<CadastroController>().limparDados();
                   context.read<UserProvider>().limparUsuario();
                   context.go('/');
@@ -589,7 +596,9 @@ class PerfilTab extends StatelessWidget {
                   iconColor: const Color(0xFFFF6961),
                   title: 'Sair da conta',
                   subtitle: 'Desconectar deste celular',
-                  onTap: () {
+                  onTap: () async {
+                    await ApiConfig.limparSessao();
+                    if (!context.mounted) return;
                     context.read<CadastroController>().limparDados();
                     context.read<UserProvider>().limparUsuario();
                     context.go('/');
