@@ -70,6 +70,13 @@ class UserProvider with ChangeNotifier {
       final perfil = await _service.obterPerfil();
       if (perfil != null) {
         _usuarioId = perfil.usuarioId;
+        // Faltava isto: o backend já manda nome/email/telefone no mesmo
+        // GET /entregador/perfil (EntregadorResponseDTO), mas só o cnh e o
+        // veículo eram copiados pro estado — por isso a tela de perfil nunca
+        // mostrava o nome e telefone que a pessoa preencheu no cadastro.
+        _nome = perfil.nome ?? _nome;
+        _email = perfil.email ?? _email;
+        _telefone = perfil.telefone ?? _telefone;
         _cnh = perfil.cnh ?? _cnh;
         _veiculoPlaca = perfil.placaVeiculo ?? _veiculoPlaca;
         _veiculoModelo = perfil.tipoVeiculo ?? _veiculoModelo;

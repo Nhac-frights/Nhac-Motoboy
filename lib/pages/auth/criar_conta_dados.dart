@@ -9,6 +9,7 @@ import '../../components/botoes/botao_largo_nhac.dart';
 import '../../components/nhac_input_field.dart';
 import '../../components/seta_voltar.dart';
 import '../../controllers/cadastro_controller.dart';
+import '../../controllers/user_provider.dart';
 import '../../globals/theme_colors.dart';
 import '../../globals/ui_utils.dart';
 import '../../services/api_config.dart';
@@ -31,10 +32,12 @@ class _CriarContaDadosPageState extends State<CriarContaDadosPage> {
   final _nomeController = TextEditingController();
   final _telefoneController = TextEditingController();
   final _senhaController = TextEditingController();
+  final _confirmarSenhaController = TextEditingController();
   final _telefoneMask = MaskTextInputFormatter(mask: '(##) #####-####');
   final AuthService _authService = AuthService();
 
   bool _senhaVisivel = false;
+  bool _confirmarSenhaVisivel = false;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -43,6 +46,7 @@ class _CriarContaDadosPageState extends State<CriarContaDadosPage> {
     _nomeController.dispose();
     _telefoneController.dispose();
     _senhaController.dispose();
+    _confirmarSenhaController.dispose();
     super.dispose();
   }
 
@@ -74,6 +78,17 @@ class _CriarContaDadosPageState extends State<CriarContaDadosPage> {
       await ApiConfig.setAuthToken(token);
 
       if (!mounted) return;
+
+      // Popula o UserProvider já aqui com o que a pessoa acabou de digitar —
+      // sem isto, a tela de perfil ficava sem nome/telefone até a próxima
+      // vez que a home chamasse carregarDadosReais() (GET /entregador/perfil).
+      context.read<UserProvider>().setUsuario(
+            id: id,
+            nome: _nomeController.text.trim(),
+            email: email,
+            telefone: telefoneFormatado,
+          );
+
       setState(() => _isLoading = false);
 
       context.showSuccess('Conta criada com sucesso!');
@@ -152,6 +167,28 @@ class _CriarContaDadosPageState extends State<CriarContaDadosPage> {
                             fontFamily: 'Roboto',
                             fontSize: 12.sp,
                             color: AppColors.desabilitado,
+                          ),
+                        ),
+                        SizedBox(height: 14.h),
+                        NhacInputField(
+                          controller: _confirmarSenhaController,
+                          hintText: 'Confirmar senha',
+                          obscureText: !_confirmarSenhaVisivel,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Confirme sua senha';
+                            }
+                            if (value != _senhaController.text) {
+                              return 'As senhas não são iguais';
+                            }
+                            return null;
+                          },
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _confirmarSenhaVisivel ? Icons.visibility : Icons.visibility_off,
+                              color: AppColors.desabilitado,
+                            ),
+                            onPressed: () => setState(() => _confirmarSenhaVisivel = !_confirmarSenhaVisivel),
                           ),
                         ),
                         if (_errorMessage != null)

@@ -28,11 +28,17 @@ class AuthService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> dados =
             jsonDecode(utf8.decode(response.bodyBytes));
-        return dados['existeUsuario'] as bool? ?? false;
+        // Bug real: o backend devolve {"existe": bool} (ChecarEmailResponseDTO),
+        // mas isto lia 'existeUsuario' — campo que nunca existiu na resposta.
+        // Resultado: null cai no "?? false", então TODO e-mail (inclusive
+        // contas já cadastradas) era tratado como novo, mandando quem só
+        // queria logar direto pro fluxo de criar conta — que o backend então
+        // rejeitava com "Este e-mail já está em uso."
+        return dados['existe'] as bool? ?? false;
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'Erro ao verificar e-mail');
+        throw Exception(erro['message'] ?? 'Erro ao verificar e-mail');
       } else {
         throw Exception('Erro ao verificar e-mail: ${response.statusCode}');
       }
@@ -56,7 +62,7 @@ class AuthService {
       if (response.statusCode != 200 && response.statusCode != 204) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'Erro ao enviar código de verificação');
+        throw Exception(erro['message'] ?? 'Erro ao enviar código de verificação');
       }
     } catch (e) {
       debugPrint('Erro ao enviar código de cadastro: $e');
@@ -78,7 +84,7 @@ class AuthService {
       if (response.statusCode != 200 && response.statusCode != 204) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'Código inválido ou expirado');
+        throw Exception(erro['message'] ?? 'Código inválido ou expirado');
       }
     } catch (e) {
       debugPrint('Erro ao confirmar e-mail: $e');
@@ -117,7 +123,7 @@ class AuthService {
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'Erro ao registrar usuário');
+        throw Exception(erro['message'] ?? 'Erro ao registrar usuário');
       } else {
         throw Exception('Erro ao registrar usuário: ${response.statusCode}');
       }
@@ -149,7 +155,7 @@ class AuthService {
       } else if (response.statusCode == 401) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'E-mail ou senha inválidos');
+        throw Exception(erro['message'] ?? 'E-mail ou senha inválidos');
       } else {
         throw Exception('Erro ao fazer login: ${response.statusCode}');
       }
@@ -173,7 +179,7 @@ class AuthService {
       if (response.statusCode != 200 && response.statusCode != 204) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'Erro ao enviar código SMS');
+        throw Exception(erro['message'] ?? 'Erro ao enviar código SMS');
       }
     } catch (e) {
       debugPrint('Erro ao enviar código SMS: $e');
@@ -213,7 +219,7 @@ class AuthService {
       } else if (response.statusCode == 400 || response.statusCode == 401) {
         final Map<String, dynamic> erro =
             jsonDecode(utf8.decode(response.bodyBytes));
-        throw Exception(erro['mensagem'] ?? 'Código inválido ou expirado');
+        throw Exception(erro['message'] ?? 'Código inválido ou expirado');
       } else {
         throw Exception('Erro ao fazer login com SMS: ${response.statusCode}');
       }

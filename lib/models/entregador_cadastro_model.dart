@@ -2,6 +2,9 @@
 class EntregadorCadastroModel {
   final String id;
   final String usuarioId;
+  final String? nome;
+  final String? email;
+  final String? telefone;
   final String? cnh;
   final String? placaVeiculo;
   final String? tipoVeiculo; // MOTO | BICICLETA | CARRO
@@ -11,6 +14,9 @@ class EntregadorCadastroModel {
   EntregadorCadastroModel({
     required this.id,
     required this.usuarioId,
+    this.nome,
+    this.email,
+    this.telefone,
     this.cnh,
     this.placaVeiculo,
     this.tipoVeiculo,
@@ -22,6 +28,13 @@ class EntregadorCadastroModel {
     return EntregadorCadastroModel(
       id: json['id']?.toString() ?? '',
       usuarioId: json['usuarioId']?.toString() ?? '',
+      // EntregadorResponseDTO (backend) já manda nome/email/telefone do
+      // Usuario vinculado — só não estavam sendo lidos aqui, então o app
+      // não tinha como preencher a tela de perfil com o nome e telefone
+      // que a pessoa acabou de digitar no cadastro.
+      nome: json['nome']?.toString(),
+      email: json['email']?.toString(),
+      telefone: json['telefone']?.toString(),
       cnh: json['cnh']?.toString(),
       placaVeiculo: json['placaVeiculo']?.toString(),
       tipoVeiculo: json['tipoVeiculo']?.toString(),
@@ -33,7 +46,13 @@ class EntregadorCadastroModel {
   }
 }
 
-/// Modelo que representa um erro de negócio retornado pela API
+/// Modelo que representa um erro de negócio retornado pela API.
+/// Campos alinhados com ErroPadraoDTO do backend (requestId, timestamp,
+/// status, error, title, message, details, path, suggestions) — 'mensagem'
+/// e 'caminho' nunca existiram na resposta real (o backend manda 'message'
+/// e 'path'), então toda mensagem de erro de negócio (ex: "Este e-mail já
+/// está em uso", "Placa já cadastrada") virava sempre o fallback genérico
+/// "Erro desconhecido" em vez do motivo real.
 class ErroPadraoDTO {
   final int status;
   final String mensagem;
@@ -48,18 +67,10 @@ class ErroPadraoDTO {
   });
 
   factory ErroPadraoDTO.fromJson(Map<String, dynamic> json) {
-    // Aceita variações do nome do campo de mensagem (mensagem/message/erro/error)
-    // para não cair sempre em "Erro desconhecido" quando o backend usa uma
-    // chave diferente da esperada.
-    final mensagem = json['mensagem']?.toString() ??
-        json['message']?.toString() ??
-        json['erro']?.toString() ??
-        json['error']?.toString() ??
-        'Erro desconhecido';
     return ErroPadraoDTO(
       status: json['status'] as int? ?? 0,
-      mensagem: mensagem,
-      caminho: json['caminho']?.toString(),
+      mensagem: json['message']?.toString() ?? 'Erro desconhecido',
+      caminho: json['path']?.toString(),
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'].toString())
           : null,

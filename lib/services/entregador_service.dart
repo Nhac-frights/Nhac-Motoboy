@@ -42,20 +42,16 @@ class EntregadorService {
       } else if (response.statusCode == 400 ||
           response.statusCode == 401 ||
           response.statusCode == 409) {
-        // 400: dados inválidos; 401: sessão expirada/token inválido;
-        // 409: CNH/placa já cadastrada em outro entregador.
         try {
           final Map<String, dynamic> erro =
               jsonDecode(utf8.decode(response.bodyBytes));
           final erroDto = ErroPadraoDTO.fromJson(erro);
           throw Exception(erroDto.mensagem);
         } on FormatException {
-          // Corpo não veio em JSON (ex.: página de erro do servidor) - loga
-          // o corpo bruto pra facilitar o diagnóstico em vez de mascarar
-          // tudo como "Erro desconhecido".
           debugPrint(
               'Corpo de erro não era JSON (status ${response.statusCode}): ${response.body}');
-          throw Exception('Não foi possível completar o cadastro (${response.statusCode}).');
+          throw Exception(
+              'Não foi possível completar o cadastro (${response.statusCode}).');
         }
       } else {
         debugPrint(
@@ -81,7 +77,6 @@ class EntregadorService {
             jsonDecode(utf8.decode(response.bodyBytes));
         return EntregadorCadastroModel.fromJson(dados);
       } else if (response.statusCode == 404) {
-        // Usuário ainda não tem cadastro como entregador
         return null;
       } else {
         debugPrint('Erro ao obter perfil: ${response.statusCode}');
@@ -106,18 +101,33 @@ class EntregadorService {
         }),
       );
 
-      return response.statusCode == 200;
-    } on http.ClientException catch (e) {
-      // Trata erro 404 (IdNaoEncontradoException) - usuário não tem cadastro
-      if (e is http.ClientException && e.toString().contains('404')) {
-        debugPrint('Usuário não possui cadastro como entregador');
-        rethrow;
+      debugPrint(
+          '>>> [atualizarStatus] HTTP ${response.statusCode} | body: ${response.body}');
+
+      // 200 e 204 são sucesso.
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
       }
-      debugPrint('Erro ao atualizar status do entregador: $e');
-      return false;
+
+      // 404 = usuário não cadastrado como entregador
+      if (response.statusCode == 404) {
+        throw Exception(
+          'Você precisa se cadastrar como entregador antes de ficar online.',
+        );
+      }
+
+      // 401 = token inválido/expirado
+      if (response.statusCode == 401) {
+        throw Exception('Sessão expirada. Faça login novamente.');
+      }
+
+      // Qualquer outro status: mostra o corpo pra diagnóstico
+      throw Exception(
+        'Erro ${response.statusCode}: ${response.body}',
+      );
     } catch (e) {
-      debugPrint('Erro ao atualizar status do entregador: $e');
-      return false;
+      debugPrint('>>> [atualizarStatus] EXCEÇÃO: $e');
+      rethrow;
     }
   }
 
@@ -135,7 +145,7 @@ class EntregadorService {
         }),
       );
 
-      return response.statusCode == 200;
+      return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
       debugPrint('Erro ao enviar localização GPS: $e');
       return false;
@@ -150,7 +160,9 @@ class EntregadorService {
 
       if (response.statusCode == 200) {
         final List<dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
-        return dados.map((item) => OfertaEntregaModel.fromJson(item as Map<String, dynamic>)).toList();
+        return dados
+            .map((item) => OfertaEntregaModel.fromJson(item as Map<String, dynamic>))
+            .toList();
       }
       return [];
     } catch (e) {
@@ -161,12 +173,14 @@ class EntregadorService {
 
   /// Aceita uma oferta de entrega pendente
   Future<EntregaAtivaModel?> aceitarOferta(String ofertaId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/ofertas/$ofertaId/aceitar');
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/ofertas/$ofertaId/aceitar');
     try {
       final response = await _client.post(url, headers: ApiConfig.headers);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
         return EntregaAtivaModel.fromJson(dados);
       }
       return null;
@@ -178,7 +192,8 @@ class EntregadorService {
 
   /// Recusa uma oferta de corrida
   Future<bool> recusarOferta(String ofertaId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/ofertas/$ofertaId/recusar');
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/ofertas/$ofertaId/recusar');
     try {
       final response = await _client.post(url, headers: ApiConfig.headers);
       return response.statusCode == 200 || response.statusCode == 204;
@@ -195,7 +210,8 @@ class EntregadorService {
       final response = await _client.get(url, headers: ApiConfig.headers);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
         return EntregaAtivaModel.fromJson(dados);
       }
       return null;
@@ -212,7 +228,8 @@ class EntregadorService {
       final response = await _client.get(url, headers: ApiConfig.headers);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
         return RotaModel.fromJson(dados);
       }
       return null;
@@ -224,14 +241,14 @@ class EntregadorService {
 
   /// Confirma a retirada do pedido na loja.
   /// POST /api/v1/entregas/{pedidoId}/coletar
-  /// Move PREPARANDO -> SAIU_ENTREGA no backend. Sem chamar isto, a corrida
-  /// nunca aparecia como "saiu para entrega" de verdade para cliente/loja.
   Future<EntregaAtivaModel?> coletarPedido(String pedidoId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/$pedidoId/coletar');
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/$pedidoId/coletar');
     try {
       final response = await _client.post(url, headers: ApiConfig.headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
         return EntregaAtivaModel.fromJson(dados);
       }
       debugPrint('Erro ao coletar pedido: ${response.statusCode} ${response.body}');
@@ -242,15 +259,11 @@ class EntregadorService {
     }
   }
 
-  /// Dá baixa na entrega (SAIU_ENTREGA -> ENTREGUE) e libera o entregador
-  /// para voltar a receber ofertas.
+  /// Dá baixa na entrega (SAIU_ENTREGA -> ENTREGUE).
   /// POST /api/v1/entregas/{pedidoId}/concluir
-  ///
-  /// Antes desta chamada existir, EntregaProvider.concluirEntrega() só
-  /// limpava o estado local — o pedido nunca terminava no backend e o
-  /// entregador ficava travado em EM_ENTREGA, sem receber novas corridas.
   Future<bool> concluirEntrega(String pedidoId) async {
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/$pedidoId/concluir');
+    final url =
+        Uri.parse('${ApiConfig.baseUrl}/api/v1/entregas/$pedidoId/concluir');
     try {
       final response = await _client.post(url, headers: ApiConfig.headers);
       return response.statusCode == 204 || response.statusCode == 200;
@@ -262,18 +275,23 @@ class EntregadorService {
 
   /// Histórico paginado de corridas do entregador logado.
   /// GET /api/v1/entregador/entregas?status=&page=&size=
-  /// status é opcional (ex.: 'ENTREGUE' para ver só as concluídas).
-  Future<HistoricoEntregasPagina> buscarHistorico({String? status, int page = 0, int size = 20}) async {
+  Future<HistoricoEntregasPagina> buscarHistorico({
+    String? status,
+    int page = 0,
+    int size = 20,
+  }) async {
     final query = {
       'page': '$page',
       'size': '$size',
       if (status != null) 'status': status,
     };
-    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/entregas').replace(queryParameters: query);
+    final url = Uri.parse('${ApiConfig.baseUrl}/api/v1/entregador/entregas')
+        .replace(queryParameters: query);
     try {
       final response = await _client.get(url, headers: ApiConfig.headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
         return HistoricoEntregasPagina.fromJson(dados);
       }
       return HistoricoEntregasPagina.vazia();
@@ -291,7 +309,8 @@ class EntregadorService {
     try {
       final response = await _client.get(url, headers: ApiConfig.headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> dados = jsonDecode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> dados =
+            jsonDecode(utf8.decode(response.bodyBytes));
         return GanhosEntregadorModel.fromJson(dados);
       }
       return null;

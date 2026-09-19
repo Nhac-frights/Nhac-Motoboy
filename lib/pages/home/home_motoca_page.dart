@@ -26,21 +26,19 @@ class HomeMotocaPage extends StatefulWidget {
 class _HomeMotocaPageState extends State<HomeMotocaPage> {
   int _selectedIndex = 0;
   late final PageController _pageController;
-  
+  String? _erroLocalizacaoExibido;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _selectedIndex);
-    // Carrega nome/e-mail/telefone/veículo reais do backend e o resumo de
-    // ganhos - a home mostrava "Carlos da Silva" e "R$ 342,00" fixos pra
-    // qualquer motoboy, sempre, mesmo sem nenhuma entrega feita.
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<UserProvider>().carregarDadosReais();
-      // Sem isto, EntregaProvider.isCadastrado ficava sempre false pra quem
-      // já tinha cadastro salvo no backend (só virava true depois de
-      // cadastrar de novo na sessão atual) - o perfil sempre oferecia
-      // "cadastrar veículo" de novo, mesmo pra quem já era cadastrado.
+      // CRÍTICO: sem isto, o backend não reconhece o usuário como
+      // entregador e o PATCH /status retorna 404 — o botão online
+      // parece "não funcionar".
       context.read<EntregaProvider>().verificarCadastro();
     });
   }
@@ -52,14 +50,34 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 350),
       curve: Curves.fastOutSlowIn,
     );
+  }
+
+  /// Mostra o erro de localização/status vindo do EntregaProvider.
+  /// Sem isso, o botão online "não faz nada" quando o GPS está desligado
+  /// ou o backend recusa a requisição.
+  void _mostrarErroSeHouver(EntregaProvider provider) {
+    final erro = provider.erroLocalizacao;
+    if (erro == null || erro == _erroLocalizacaoExibido) return;
+
+    _erroLocalizacaoExibido = erro;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(erro),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    });
   }
 
   @override
@@ -68,6 +86,8 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
     final entregaProvider = context.watch<EntregaProvider>();
     final estaOnline = entregaProvider.estaOnline;
     final oferta = entregaProvider.ofertaAtual;
+
+    _mostrarErroSeHouver(entregaProvider);
 
     return Scaffold(
       backgroundColor: AppColors.fundo,
@@ -96,16 +116,12 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
                   ),
                   tooltip: 'Sair da conta',
                   onPressed: () async {
-                    // Faltava limpar UserProvider e a sessão persistida
-                    // (ApiConfig) aqui - só CadastroController era limpo,
-                    // então o token continuava valendo (e agora, salvo em
-                    // disco, o redirect do router mandaria de volta pra
-                    // home no próximo abrir do app).
+                    final navContext = context;
                     await ApiConfig.limparSessao();
-                    if (!mounted) return;
-                    context.read<CadastroController>().limparDados();
-                    context.read<UserProvider>().limparUsuario();
-                    context.go('/');
+                    if (!navContext.mounted) return;
+                    navContext.read<CadastroController>().limparDados();
+                    navContext.read<UserProvider>().limparUsuario();
+                    navContext.go('/');
                   },
                 ),
                 SizedBox(width: 8.w),
@@ -117,9 +133,7 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(),
             onPageChanged: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
+              setState(() => _selectedIndex = index);
             },
             children: [
               InicioTab(
@@ -142,7 +156,6 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
               onItemSelected: _onItemTapped,
             ),
           ),
-          // Card de Nova Corrida quando recebida do backend
           if (oferta != null)
             Container(
               color: Colors.black.withValues(alpha: 0.5),

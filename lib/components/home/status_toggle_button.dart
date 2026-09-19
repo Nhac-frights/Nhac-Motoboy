@@ -75,7 +75,6 @@ class _StatusToggleButtonState extends State<StatusToggleButton>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Indicador com efeito pulsante quando online
               SizedBox(
                 width: 18.r,
                 height: 18.r,
@@ -133,7 +132,6 @@ class _StatusToggleButtonState extends State<StatusToggleButton>
                 child: Text(online ? 'DISPONÍVEL' : 'INDISPONÍVEL'),
               ),
               SizedBox(width: 8.w),
-              // Mini switch visual integrado
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
                 width: 32.w,

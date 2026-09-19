@@ -31,9 +31,6 @@ class EntregaProvider extends ChangeNotifier {
   Timer? _countdownTimer;
   StreamSubscription<Position>? _posicaoSubscription;
 
-  // Posicao GPS. null ate a primeira leitura real chegar - sem fallback pra
-  // coordenada fixa: preferimos nao enviar heartbeat a mandar uma posicao
-  // falsa que quebra silenciosamente o calculo de distancia do despacho.
   double? _latitudeAtual;
   double? _longitudeAtual;
 
@@ -53,8 +50,6 @@ class EntregaProvider extends ChangeNotifier {
   double? get longitudeAtual => _longitudeAtual;
   String? get erroLocalizacao => _erroLocalizacao;
 
-  /// true quando a entrega ativa ja foi coletada na loja (SAIU_ENTREGA) -
-  /// controla se a UI mostra "Confirmar retirada" ou "Concluir entrega".
   bool get entregaColetada => _entregaAtiva?.statusPedido == 'SAIU_ENTREGA';
 
   /// Realiza o cadastro do entregador (Fase 5)
@@ -95,11 +90,12 @@ class EntregaProvider extends ChangeNotifier {
   }
 
   Future<void> alternarStatusOnline(bool novoStatus) async {
+    debugPrint('>>> [alternarStatusOnline] início, novoStatus=$novoStatus');
+
+    // 1) Verifica GPS/permissão
     if (novoStatus) {
-      // Nao faz sentido ficar ONLINE sem GPS: o despacho no backend calcula
-      // distancia pela posicao enviada, e sem heartbeat o motoboy nunca
-      // aparece como candidato a nenhuma oferta.
       final erro = await _locationService.solicitarPermissao();
+      debugPrint('>>> [alternarStatusOnline] solicitarPermissao retornou: $erro');
       if (erro != null) {
         _erroLocalizacao = erro;
         notifyListeners();
@@ -108,26 +104,43 @@ class EntregaProvider extends ChangeNotifier {
       _erroLocalizacao = null;
     }
 
+    // 2) Chama backend
     _isLoading = true;
     notifyListeners();
 
     final statusOperacional = novoStatus ? 'ONLINE' : 'OFFLINE';
-    final sucesso = await _service.atualizarStatus(statusOperacional);
+    bool sucesso = false;
+
+    try {
+      sucesso = await _service.atualizarStatus(statusOperacional);
+      debugPrint('>>> [alternarStatusOnline] atualizarStatus retornou: $sucesso');
+    } catch (e) {
+      debugPrint('>>> [alternarStatusOnline] atualizarStatus lançou: $e');
+      _erroLocalizacao = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     _isLoading = false;
 
+    // 3) Só liga o ciclo online se o backend confirmou
     if (sucesso || !novoStatus) {
       _estaOnline = novoStatus;
+      _erroLocalizacao = null;
       if (_estaOnline) {
         await _iniciarCicloOnline();
       } else {
         _pararCicloOnline();
       }
+    } else {
+      _erroLocalizacao = 'Não foi possível ficar online. Tente novamente.';
     }
     notifyListeners();
   }
 
   Future<void> _iniciarCicloOnline() async {
-    // 1. Leitura pontual imediata, pra nao esperar o stream continuo estabilizar.
+    // 1. Leitura pontual imediata
     final posicaoInicial = await _locationService.obterPosicaoAtual();
     if (posicaoInicial != null) {
       _latitudeAtual = posicaoInicial.latitude;
@@ -135,8 +148,7 @@ class EntregaProvider extends ChangeNotifier {
       await _enviarLocalizacaoAtual();
     }
 
-    // 2. Stream continuo de GPS: atualiza a posicao local e reenvia sempre
-    // que o motoboy se move (ver distanceFilter no LocationService).
+    // 2. Stream contínuo de GPS
     _posicaoSubscription?.cancel();
     _posicaoSubscription = _locationService.streamDePosicao().listen((posicao) {
       _latitudeAtual = posicao.latitude;
@@ -147,14 +159,13 @@ class EntregaProvider extends ChangeNotifier {
       debugPrint('Erro no stream de GPS: $e');
     });
 
-    // 3. Heartbeat de seguranca a cada 15s, mesmo parado (distanceFilter do
-    // stream nao dispara se o motoboy estiver esperando ofertas sem se mover).
+    // 3. Heartbeat a cada 15s
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (_) {
       _enviarLocalizacaoAtual();
     });
 
-    // 4. Verificacao de novas ofertas de despacho a cada 5 segundos
+    // 4. Verificação de novas ofertas a cada 5 segundos
     _ofertasTimer?.cancel();
     _ofertasTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _verificarNovasOfertas();
@@ -189,7 +200,8 @@ class EntregaProvider extends ChangeNotifier {
 
   void _definirNovaOferta(OfertaEntregaModel oferta) {
     _ofertaAtual = oferta;
-    _segundosRestantes = oferta.tempoRestanteSegundos > 0 ? oferta.tempoRestanteSegundos : 45;
+    _segundosRestantes =
+        oferta.tempoRestanteSegundos > 0 ? oferta.tempoRestanteSegundos : 45;
     notifyListeners();
 
     _countdownTimer?.cancel();
@@ -218,8 +230,6 @@ class EntregaProvider extends ChangeNotifier {
       _entregaAtiva = entrega;
       _ofertaAtual = null;
       notifyListeners();
-
-      // Carrega a rota calculada para o mapa
       await carregarRota(entrega.pedidoId);
       return true;
     } else {
@@ -254,9 +264,6 @@ class EntregaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Confirma a retirada do pedido na loja. Chamar quando o motoboy chega no
-  /// restaurante e aperta "Confirmar retirada" - move PREPARANDO -> SAIU_ENTREGA
-  /// no backend (ver EntregaAtivaModel.statusPedido / entregaColetada acima).
   Future<bool> confirmarColeta() async {
     if (_entregaAtiva == null) return false;
 
@@ -275,9 +282,6 @@ class EntregaProvider extends ChangeNotifier {
     return false;
   }
 
-  /// Da baixa na entrega. Antes, isto so limpava o estado local e nunca
-  /// chamava o backend - o pedido nunca virava ENTREGUE e o entregador ficava
-  /// travado em EM_ENTREGA, sem receber novas ofertas nunca mais.
   Future<bool> concluirEntregaAtual() async {
     if (_entregaAtiva == null) return false;
 

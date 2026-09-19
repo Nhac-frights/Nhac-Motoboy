@@ -32,6 +32,7 @@ class ApiConfig {
     return 'https://backend-nhac.onrender.com'; // <- direto aqui
   }
 
+
   /// Base do WebSocket (STOMP), derivada de baseUrl trocando o esquema
   /// http(s) por ws(s). Backend expõe o endpoint nativo em /ws-native.
   static String get wsUrl {
