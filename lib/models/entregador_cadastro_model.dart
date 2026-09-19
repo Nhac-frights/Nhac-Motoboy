@@ -48,9 +48,17 @@ class ErroPadraoDTO {
   });
 
   factory ErroPadraoDTO.fromJson(Map<String, dynamic> json) {
+    // Aceita variações do nome do campo de mensagem (mensagem/message/erro/error)
+    // para não cair sempre em "Erro desconhecido" quando o backend usa uma
+    // chave diferente da esperada.
+    final mensagem = json['mensagem']?.toString() ??
+        json['message']?.toString() ??
+        json['erro']?.toString() ??
+        json['error']?.toString() ??
+        'Erro desconhecido';
     return ErroPadraoDTO(
       status: json['status'] as int? ?? 0,
-      mensagem: json['mensagem']?.toString() ?? 'Erro desconhecido',
+      mensagem: mensagem,
       caminho: json['caminho']?.toString(),
       timestamp: json['timestamp'] != null
           ? DateTime.parse(json['timestamp'].toString())

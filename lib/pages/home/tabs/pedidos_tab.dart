@@ -26,13 +26,10 @@ class _PedidosTabState extends State<PedidosTab> {
     _carregarHistorico();
   }
 
-  /// Antes, esta aba só mostrava a entrega ativa (ou o estado vazio) - não
-  /// existia nenhuma lista de corridas já concluídas, mesmo com o histórico
-  /// já existindo no backend (GET /api/v1/entregador/entregas, V039).
   Future<void> _carregarHistorico() async {
     setState(() => _carregandoHistorico = true);
     final pagina = await _service.buscarHistorico(status: 'ENTREGUE', size: 15);
-    if (!mounted) return;
+    if (!mounted) return;  // ✅ era context.mounted
     setState(() {
       _historico = pagina.itens;
       _carregandoHistorico = false;
@@ -63,7 +60,6 @@ class _PedidosTabState extends State<PedidosTab> {
             SizedBox(height: 24.h),
 
             if (entrega != null) ...[
-              // Card de Entrega Ativa
               Container(
                 padding: EdgeInsets.all(20.r),
                 decoration: BoxDecoration(

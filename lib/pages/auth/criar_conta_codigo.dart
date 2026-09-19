@@ -12,11 +12,6 @@ import '../../globals/theme_colors.dart';
 import '../../globals/ui_utils.dart';
 import '../../services/auth_service.dart';
 
-/// Segunda etapa do cadastro por e-mail (a primeira, EmailMotocaPage, já
-/// disparou o código via enviarCodigoCadastro antes de navegar pra cá).
-///
-/// Espelha VerificacaoNumeroPage (fluxo por SMS) — mesmo componente de PIN,
-/// mesmo timer de reenvio — só troca o backend chamado.
 class CriarContaCodigoPage extends StatefulWidget {
   const CriarContaCodigoPage({super.key});
 
@@ -38,14 +33,12 @@ class _CriarContaCodigoPageState extends State<CriarContaCodigoPage> {
   @override
   void initState() {
     super.initState();
+    _tempoRestante = 60;
+    _podeReenviar = false;
     _iniciarTimer();
   }
 
   void _iniciarTimer() {
-    setState(() {
-      _tempoRestante = 60;
-      _podeReenviar = false;
-    });
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -64,21 +57,30 @@ class _CriarContaCodigoPageState extends State<CriarContaCodigoPage> {
   Future<void> _reenviarCodigo() async {
     if (!_podeReenviar) return;
     final email = context.read<CadastroController>().email;
+
     try {
       await _authService.enviarCodigoCadastro(email);
+      if (!mounted) return;
+      setState(() {
+        _tempoRestante = 60;
+        _podeReenviar = false;
+      });
       _iniciarTimer();
-      if (mounted) context.showSuccess('Código reenviado para $email!');
+      context.showSuccess('Código reenviado para $email!');
     } catch (e) {
-      if (mounted) {
-        setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
-      }
+      if (!mounted) return;
+      setState(() => _errorMessage = e.toString().replaceAll('Exception: ', ''));
     }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _pinController.dispose();
+    _timer = null;
+    // NÃO descartar _pinController aqui: o PinCodeTextField ainda
+    // referencia o controller durante o unmount e dispara
+    // "A TextEditingController was used after being disposed".
+    // O controller é coletado pelo GC quando o widget sai.
     super.dispose();
   }
 
@@ -177,7 +179,9 @@ class _CriarContaCodigoPageState extends State<CriarContaCodigoPage> {
                                 : 'Reenviar código em 00:${_tempoRestante.toString().padLeft(2, '0')}',
                             style: TextStyle(
                               fontFamily: 'Roboto',
-                              color: _podeReenviar ? AppColors.primaria : AppColors.desabilitado,
+                              color: _podeReenviar
+                                  ? AppColors.primaria
+                                  : AppColors.desabilitado,
                               fontSize: 15.sp,
                               fontWeight: FontWeight.w600,
                             ),
@@ -189,12 +193,17 @@ class _CriarContaCodigoPageState extends State<CriarContaCodigoPage> {
                           padding: EdgeInsets.only(top: 16.h),
                           child: Row(
                             children: [
-                              Icon(Icons.error_outline, color: Colors.red, size: 16.r),
+                              Icon(Icons.error_outline,
+                                  color: Colors.red, size: 16.r),
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: Text(
                                   _errorMessage!,
-                                  style: TextStyle(color: Colors.red, fontSize: 13.sp, fontWeight: FontWeight.w500),
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ],

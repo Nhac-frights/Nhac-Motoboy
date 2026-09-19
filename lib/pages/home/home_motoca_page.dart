@@ -37,6 +37,11 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
     // qualquer motoboy, sempre, mesmo sem nenhuma entrega feita.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<UserProvider>().carregarDadosReais();
+      // Sem isto, EntregaProvider.isCadastrado ficava sempre false pra quem
+      // já tinha cadastro salvo no backend (só virava true depois de
+      // cadastrar de novo na sessão atual) - o perfil sempre oferecia
+      // "cadastrar veículo" de novo, mesmo pra quem já era cadastrado.
+      context.read<EntregaProvider>().verificarCadastro();
     });
   }
 
@@ -97,7 +102,7 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
                     // disco, o redirect do router mandaria de volta pra
                     // home no próximo abrir do app).
                     await ApiConfig.limparSessao();
-                    if (!context.mounted) return;
+                    if (!mounted) return;
                     context.read<CadastroController>().limparDados();
                     context.read<UserProvider>().limparUsuario();
                     context.go('/');

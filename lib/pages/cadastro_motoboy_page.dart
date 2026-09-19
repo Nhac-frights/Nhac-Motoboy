@@ -10,7 +10,6 @@ import '../../components/seta_voltar.dart';
 import '../../controllers/entrega_provider.dart';
 import '../../controllers/user_provider.dart';
 import '../../globals/theme_colors.dart';
-import '../../globals/ui_utils.dart';
 import '../../utils/validators.dart';
 
 class CadastroMotoboyPage extends StatefulWidget {
@@ -23,9 +22,9 @@ class CadastroMotoboyPage extends StatefulWidget {
 class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
   late final TextEditingController _cnhController;
   late final TextEditingController _placaController;
-  
+
   String _tipoVeiculoSelecionado = 'MOTO'; // MOTO | BICICLETA | CARRO
-  
+
   bool _isLoading = false;
   bool _formValido = false;
   String? _erroCnh;
@@ -36,10 +35,9 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
     super.initState();
     _cnhController = TextEditingController();
     _placaController = TextEditingController();
-    
+
     _cnhController.addListener(_validarFormulario);
     _placaController.addListener(_validarFormulario);
-    _validarFormulario();
   }
 
   @override
@@ -53,51 +51,105 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
 
   void _validarFormulario() {
     if (!mounted) return;
-    
+
     final cnh = _cnhController.text.trim();
     final placa = _placaController.text.trim();
-    
+
+    final erroCnh = Validators.validarCNH(cnh);
+    final erroPlaca = Validators.validarPlaca(placa);
+    final formValido = erroCnh == null &&
+        erroPlaca == null &&
+        cnh.isNotEmpty &&
+        placa.isNotEmpty;
+
+    if (erroCnh == _erroCnh &&
+        erroPlaca == _erroPlaca &&
+        formValido == _formValido) {
+      return;
+    }
+
     setState(() {
-      _erroCnh = Validators.validarCNH(cnh);
-      _erroPlaca = Validators.validarPlaca(placa);
-      _formValido = _erroCnh == null && 
-                    _erroPlaca == null && 
-                    cnh.isNotEmpty && 
-                    placa.isNotEmpty;
+      _erroCnh = erroCnh;
+      _erroPlaca = erroPlaca;
+      _formValido = formValido;
     });
   }
 
   Future<void> _cadastrarEntregador() async {
     if (!_formValido) return;
 
+    final cnh = _cnhController.text.trim();
+    final placa = _placaController.text.trim().toUpperCase();
+    final tipoVeiculo = _tipoVeiculoSelecionado;
+    final entregaProvider = context.read<EntregaProvider>();
+    final userProvider = context.read<UserProvider>();
+
     try {
       setState(() => _isLoading = true);
-      
-      final entregaProvider = context.read<EntregaProvider>();
-      final userProvider = context.read<UserProvider>();
-      
-      final resultado = await entregaProvider.cadastrarEntregador(
-        cnh: _cnhController.text.trim(),
-        placaVeiculo: _placaController.text.trim().toUpperCase(),
-        tipoVeiculo: _tipoVeiculoSelecionado,
+
+      await entregaProvider.cadastrarEntregador(
+        cnh: cnh,
+        placaVeiculo: placa,
+        tipoVeiculo: tipoVeiculo,
       );
 
       if (!mounted) return;
-      
-      // Atualiza o UserProvider com os dados do veículo
+
       userProvider.atualizarVeiculo(
-        modelo: '', // Será preenchido posteriormente
-        placa: _placaController.text.trim().toUpperCase(),
-        cor: '', // Será preenchido posteriormente
+        modelo: '',
+        placa: placa,
+        cor: '',
       );
 
-      context.showSuccess('Cadastro realizado com sucesso! Você já pode receber pedidos.');
-      context.go('/home-motoca');
+      // ✅ Mostrar SnackBar ANTES de navegar: ainda estamos no Scaffold
+      // desta tela, então o messenger está vivo.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cadastro realizado com sucesso! Você já pode receber pedidos.'),
+            backgroundColor: Color(0xFF4CAF50),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // ✅ Navega por último: o SnackBar fica flutuando por cima da nova tela.
+      if (mounted) {
+        context.go('/home-motoca');
+      }
     } catch (e) {
       if (!mounted) return;
-      // Trata erro de cadastro duplicado ou outros erros de negócio
+
       final mensagemErro = e.toString().replaceAll('Exception: ', '');
-      context.showError(mensagemErro);
+
+      // Erro de negócio: já é cadastrado.
+      if (mensagemErro.toLowerCase().contains('já possui cadastro')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Você já é entregador. Bem-vindo de volta!'),
+              backgroundColor: Color(0xFF4CAF50),
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        if (mounted) {
+          context.go('/home-motoca');
+        }
+        return;
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(mensagemErro),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -132,8 +184,7 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                         style: AppTextStyles.subtitulo(),
                       ),
                       SizedBox(height: 32.h),
-                      
-                      // Tipo de Veículo
+
                       Text(
                         'Tipo de Veículo',
                         style: TextStyle(
@@ -155,7 +206,10 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                           child: DropdownButton<String>(
                             value: _tipoVeiculoSelecionado,
                             isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF5D201C)),
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down,
+                              color: Color(0xFF5D201C),
+                            ),
                             style: TextStyle(
                               fontSize: 16.sp,
                               color: const Color(0xFF5D201C),
@@ -168,16 +222,14 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                               DropdownMenuItem(value: 'CARRO', child: Text('Carro')),
                             ],
                             onChanged: (valor) {
-                              setState(() {
-                                _tipoVeiculoSelecionado = valor!;
-                              });
+                              if (valor == null) return;
+                              setState(() => _tipoVeiculoSelecionado = valor);
                             },
                           ),
                         ),
                       ),
                       SizedBox(height: 24.h),
-                      
-                      // CNH
+
                       Text(
                         'Número da CNH',
                         style: TextStyle(
@@ -205,8 +257,7 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                         ),
                       ),
                       SizedBox(height: 24.h),
-                      
-                      // Placa do Veículo
+
                       Text(
                         'Placa do Veículo',
                         style: TextStyle(
@@ -219,10 +270,7 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                       SizedBox(height: 8.h),
                       NhacInputField(
                         controller: _placaController,
-                        textCapitalization: TextCapitalization.characters,
-                        inputFormatters: [
-                          UpperCaseTextFormatter(),
-                        ],
+                        inputFormatters: [UpperCaseTextFormatter()],
                         hintText: 'Ex: ABC-1234 ou BRA2E19',
                         errorText: _erroPlaca,
                         style: TextStyle(
@@ -233,14 +281,15 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                         ),
                       ),
                       SizedBox(height: 32.h),
-                      
-                      // Informações adicionais
+
                       Container(
                         padding: EdgeInsets.all(16.w),
                         decoration: BoxDecoration(
                           color: AppColors.secundaria.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(color: AppColors.secundaria.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: AppColors.secundaria.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,10 +319,14 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
                 ),
               ),
             ),
-            
-            // Botão de cadastro
+
             Padding(
-              padding: EdgeInsets.only(left: 24.w, right: 24.w, bottom: 32.h, top: 16.h),
+              padding: EdgeInsets.only(
+                left: 24.w,
+                right: 24.w,
+                bottom: 32.h,
+                top: 16.h,
+              ),
               child: BotaoLargoNhac(
                 texto: 'Cadastrar como entregador',
                 carregando: _isLoading,
@@ -287,7 +340,6 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
   }
 }
 
-/// Formatter para converter texto para maiúsculas
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

@@ -39,12 +39,27 @@ class EntregadorService {
         final Map<String, dynamic> dados =
             jsonDecode(utf8.decode(response.bodyBytes));
         return EntregadorCadastroModel.fromJson(dados);
-      } else if (response.statusCode == 400) {
-        final Map<String, dynamic> erro =
-            jsonDecode(utf8.decode(response.bodyBytes));
-        final erroDto = ErroPadraoDTO.fromJson(erro);
-        throw Exception(erroDto.mensagem);
+      } else if (response.statusCode == 400 ||
+          response.statusCode == 401 ||
+          response.statusCode == 409) {
+        // 400: dados inválidos; 401: sessão expirada/token inválido;
+        // 409: CNH/placa já cadastrada em outro entregador.
+        try {
+          final Map<String, dynamic> erro =
+              jsonDecode(utf8.decode(response.bodyBytes));
+          final erroDto = ErroPadraoDTO.fromJson(erro);
+          throw Exception(erroDto.mensagem);
+        } on FormatException {
+          // Corpo não veio em JSON (ex.: página de erro do servidor) - loga
+          // o corpo bruto pra facilitar o diagnóstico em vez de mascarar
+          // tudo como "Erro desconhecido".
+          debugPrint(
+              'Corpo de erro não era JSON (status ${response.statusCode}): ${response.body}');
+          throw Exception('Não foi possível completar o cadastro (${response.statusCode}).');
+        }
       } else {
+        debugPrint(
+            'Erro ao cadastrar entregador: status ${response.statusCode}, corpo: ${response.body}');
         throw Exception('Erro ao cadastrar entregador: ${response.statusCode}');
       }
     } catch (e) {

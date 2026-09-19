@@ -29,13 +29,7 @@ class ApiConfig {
     if (configurada.isNotEmpty) {
       return configurada;
     }
-    if (kIsWeb) {
-      return 'http://localhost:8080';
-    }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8080';
-    }
-    return 'http://localhost:8080';
+    return 'https://backend-nhac.onrender.com'; // <- direto aqui
   }
 
   /// Base do WebSocket (STOMP), derivada de baseUrl trocando o esquema
@@ -88,6 +82,11 @@ class ApiConfig {
     final map = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      // Identifica pro backend que esta requisição vem do app do motoboy —
+      // usado em AuthController.validarOrigemApp (backend) para bloquear
+      // contas LOJISTA/FUNCIONARIO logando aqui, mesmo via Google (que
+      // autentica automaticamente sem pedir confirmação de qual conta usar).
+      'X-App-Origin': 'motoboy',
     };
     if (_authToken != null && _authToken!.isNotEmpty) {
       map['Authorization'] = 'Bearer $_authToken';

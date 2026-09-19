@@ -38,7 +38,6 @@ class CardNovaOfertaDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Cabeçalho com badge de nova corrida e countdown
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -66,7 +65,6 @@ class CardNovaOfertaDialog extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Contador regressivo circular
                 Stack(
                   alignment: Alignment.center,
                   children: [
@@ -98,7 +96,6 @@ class CardNovaOfertaDialog extends StatelessWidget {
 
             SizedBox(height: 18.h),
 
-            // Valor do ganho em destaque
             Center(
               child: Column(
                 children: [
@@ -128,7 +125,6 @@ class CardNovaOfertaDialog extends StatelessWidget {
             const Divider(color: AppColors.bordaInativa, height: 1),
             SizedBox(height: 16.h),
 
-            // Ponto de Coleta (Loja)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -182,7 +178,6 @@ class CardNovaOfertaDialog extends StatelessWidget {
 
             SizedBox(height: 14.h),
 
-            // Ponto de Entrega (Cliente)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -227,7 +222,6 @@ class CardNovaOfertaDialog extends StatelessWidget {
 
             SizedBox(height: 24.h),
 
-            // Botões de Ação
             Row(
               children: [
                 Expanded(
@@ -265,10 +259,16 @@ class CardNovaOfertaDialog extends StatelessWidget {
                     onPressed: entregaProvider.isLoading
                         ? null
                         : () async {
+                            // Captura o messenger ANTES do await: o dialog pode
+                            // sair da árvore (countdown zerando, por ex.) e
+                            // ScaffoldMessenger.of(context) explodiria depois.
+                            final messenger = ScaffoldMessenger.maybeOf(context);
                             final ok = await entregaProvider.aceitarOfertaAtual();
-                            if (!ok && context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Não foi possível aceitar a corrida.')),
+                            if (!ok && context.mounted && messenger != null) {
+                              messenger.showSnackBar(
+                                const SnackBar(
+                                  content: Text('Não foi possível aceitar a corrida.'),
+                                ),
                               );
                             }
                           },

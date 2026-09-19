@@ -20,8 +20,10 @@ dependencies:
   provider: ^6.1.2
   image_picker: ^1.2.3
   http: ^1.2.2
-  geolocator: ^14.0.3
-  shared_preferences: ^2.5.5
+  shared_preferences: ^2.3.3
+  geolocator: ^13.0.2
+  stomp_dart_client: ^2.1.2
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
