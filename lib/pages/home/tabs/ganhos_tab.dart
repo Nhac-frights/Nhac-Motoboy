@@ -37,6 +37,7 @@ class _GanhosTabState extends State<GanhosTab> {
   _Periodo _periodoSelecionado = _Periodo.hoje;
   GanhosEntregadorModel? _ganhos;
   bool _carregando = true;
+  bool _naoEhEntregador = false;
   String? _erro;
 
   @override
@@ -49,19 +50,31 @@ class _GanhosTabState extends State<GanhosTab> {
     setState(() {
       _carregando = true;
       _erro = null;
+      _naoEhEntregador = false;
     });
 
-    final resultado = await _service.buscarGanhos(periodo: _periodoSelecionado.chaveApi);
-
-    if (!mounted) return;
-    setState(() {
-      _carregando = false;
-      if (resultado != null) {
-        _ganhos = resultado;
-      } else {
-        _erro = 'Não foi possível carregar seus ganhos agora.';
-      }
-    });
+    try {
+      final resultado = await _service.buscarGanhos(periodo: _periodoSelecionado.chaveApi);
+      if (!mounted) return;
+      setState(() {
+        _carregando = false;
+        if (resultado != null) {
+          _ganhos = resultado;
+        } else {
+          _erro = 'Não foi possível carregar seus ganhos agora.';
+        }
+      });
+    } on EntregadorNaoCadastradoException {
+      // Antes, isto caía no mesmo "erro genérico, tente novamente" que um
+      // problema de rede de verdade — mas a pessoa só ainda não completou
+      // o cadastro de entregador, o que não é bem um "erro" do ponto de
+      // vista dela.
+      if (!mounted) return;
+      setState(() {
+        _carregando = false;
+        _naoEhEntregador = true;
+      });
+    }
   }
 
   void _selecionarPeriodo(_Periodo periodo) {
@@ -116,12 +129,41 @@ class _GanhosTabState extends State<GanhosTab> {
                 padding: EdgeInsets.symmetric(vertical: 40),
                 child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
               )
+            else if (_naoEhEntregador)
+              _buildNaoEhEntregador()
             else if (_erro != null)
               _buildErro()
             else
               _buildResumo(_ganhos!),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Estado neutro para quem ainda não completou o cadastro de entregador —
+  /// nada de errado aconteceu, só ainda não há nada pra mostrar aqui.
+  Widget _buildNaoEhEntregador() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(24.r),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20.r)),
+      child: Column(
+        children: [
+          Icon(Icons.two_wheeler_rounded, size: 40.r, color: AppColors.bordaInativa),
+          SizedBox(height: 12.h),
+          Text(
+            'Você ainda não tem ganhos por aqui',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.texto),
+          ),
+          SizedBox(height: 6.h),
+          Text(
+            'Complete seu cadastro de entregador para começar a receber corridas.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 13.sp, color: AppColors.desabilitado),
+          ),
+        ],
       ),
     );
   }

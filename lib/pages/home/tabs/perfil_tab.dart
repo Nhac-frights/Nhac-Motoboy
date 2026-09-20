@@ -280,334 +280,336 @@ class PerfilTab extends StatelessWidget {
     final userProvider = context.watch<UserProvider>();
     final temFoto = userProvider.fotoPerfil != null && userProvider.fotoPerfil!.isNotEmpty;
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 120.h),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Barra de topo estilo Nhac (Notificações, Título Perfil, Mais opções)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              GestureDetector(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Você não tem novas notificações.'),
+    return SafeArea(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 120.h),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Barra de topo estilo Nhac (Notificações, Título Perfil, Mais opções)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Você não tem novas notificações.'),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    width: 40.w,
+                    height: 40.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
                     ),
-                  );
-                },
-                child: Container(
-                  width: 40.w,
-                  height: 40.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.notifications_none,
-                    color: Color(0xFF5D201C),
+                    child: const Icon(
+                      Icons.notifications_none,
+                      color: Color(0xFF5D201C),
+                    ),
                   ),
                 ),
-              ),
-              Text(
-                'Perfil',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF5D201C),
-                  fontFamily: 'Roboto',
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _mostrarOpcoesConta(context),
-                child: Container(
-                  width: 40.w,
-                  height: 40.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.6),
-                    shape: BoxShape.circle,
+                Text(
+                  'Perfil',
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF5D201C),
+                    fontFamily: 'Roboto',
                   ),
-                  child: const Icon(Icons.more_horiz, color: Color(0xFF5D201C)),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 32.h),
+                GestureDetector(
+                  onTap: () => _mostrarOpcoesConta(context),
+                  child: Container(
+                    width: 40.w,
+                    height: 40.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.more_horiz, color: Color(0xFF5D201C)),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 32.h),
 
-          // Header com foto de perfil e dados do parceiro
-          Row(
-            children: [
-              Stack(
-                children: [
-                  GestureDetector(
-                    onLongPress: () => _mostrarPreviewFoto(context, userProvider.fotoPerfil),
-                    onLongPressUp: () => Navigator.of(context).pop(),
-                    child: Container(
-                      width: 80.w,
-                      height: 80.h,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF5D201C).withValues(alpha: 0.1),
-                            blurRadius: 10.r,
-                            offset: Offset(0, 4.h),
-                          ),
-                        ],
-                      ),
-                      child: ClipOval(
-                        child: temFoto
-                            ? (userProvider.fotoPerfil!.startsWith('http')
-                                ? Image.network(userProvider.fotoPerfil!, fit: BoxFit.cover)
-                                : Image.file(File(userProvider.fotoPerfil!), fit: BoxFit.cover))
-                            : Center(
-                                child: Icon(
-                                  Icons.two_wheeler_rounded,
-                                  size: 44.r,
-                                  color: AppColors.primaria,
+            // Header com foto de perfil e dados do parceiro
+            Row(
+              children: [
+                Stack(
+                  children: [
+                    GestureDetector(
+                      onLongPress: () => _mostrarPreviewFoto(context, userProvider.fotoPerfil),
+                      onLongPressUp: () => Navigator.of(context).pop(),
+                      child: Container(
+                        width: 80.w,
+                        height: 80.h,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF5D201C).withValues(alpha: 0.1),
+                              blurRadius: 10.r,
+                              offset: Offset(0, 4.h),
+                            ),
+                          ],
+                        ),
+                        child: ClipOval(
+                          child: temFoto
+                              ? (userProvider.fotoPerfil!.startsWith('http')
+                                  ? Image.network(userProvider.fotoPerfil!, fit: BoxFit.cover)
+                                  : Image.file(File(userProvider.fotoPerfil!), fit: BoxFit.cover))
+                              : Center(
+                                  child: Icon(
+                                    Icons.two_wheeler_rounded,
+                                    size: 44.r,
+                                    color: AppColors.primaria,
+                                  ),
                                 ),
-                              ),
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const EditarFotoPage()),
-                        );
-                      },
-                      child: Container(
-                        padding: EdgeInsets.all(4.w),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const EditarFotoPage()),
+                          );
+                        },
                         child: Container(
                           padding: EdgeInsets.all(4.w),
                           decoration: const BoxDecoration(
-                            color: Color(0xFF5D201C),
+                            color: Colors.white,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.edit,
-                            size: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(width: 16.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      userProvider.nome.isNotEmpty ? userProvider.nome : 'Parceiro Motoca',
-                      style: TextStyle(
-                        fontSize: 22.sp,
-                        fontWeight: FontWeight.bold,
-                        color: const Color(0xFF5D201C),
-                        fontFamily: 'Roboto',
-                      ),
-                    ),
-                    SizedBox(height: 4.h),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.two_wheeler_outlined,
-                          size: 14.r,
-                          color: Colors.grey.shade600,
-                        ),
-                        SizedBox(width: 4.w),
-                        Expanded(
-                          child: Text(
-                            '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}',
-                            style: TextStyle(
-                              color: Colors.grey.shade700,
-                              fontSize: 12.sp,
-                              fontFamily: 'Roboto',
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF5D201C),
+                              shape: BoxShape.circle,
                             ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                            child: const Icon(
+                              Icons.edit,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
+                SizedBox(width: 16.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userProvider.nome.isNotEmpty ? userProvider.nome : 'Parceiro Motoca',
+                        style: TextStyle(
+                          fontSize: 22.sp,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF5D201C),
+                          fontFamily: 'Roboto',
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.two_wheeler_outlined,
+                            size: 14.r,
+                            color: Colors.grey.shade600,
+                          ),
+                          SizedBox(width: 4.w),
+                          Expanded(
+                            child: Text(
+                              '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}',
+                              style: TextStyle(
+                                color: Colors.grey.shade700,
+                                fontSize: 12.sp,
+                                fontFamily: 'Roboto',
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 32.h),
+
+            // Estatísticas do Motoboy no estilo idêntico ao Nhac
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildStatItem('${userProvider.entregas}', 'Entregas'),
+                Container(height: 30.h, width: 1.w, color: Colors.grey.shade300),
+                _buildStatItem('${userProvider.avaliacao}', 'Avaliação'),
+                Container(height: 30.h, width: 1.w, color: Colors.grey.shade300),
+                _buildStatItem('R\$ ${userProvider.ganhos.toStringAsFixed(0)}', 'Ganhos'),
+              ],
+            ),
+            SizedBox(height: 36.h),
+
+            // Seção 1: "Sua Conta"
+            Text(
+              'Sua Conta',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF5D201C),
+                fontFamily: 'Roboto',
               ),
-            ],
-          ),
-          SizedBox(height: 32.h),
+            ),
+            SizedBox(height: 16.h),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(24.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF5D201C).withValues(alpha: 0.03),
+                    blurRadius: 15.r,
+                    offset: Offset(0, 5.h),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildAccountRow(
+                    icon: Icons.person_outline,
+                    iconColor: const Color(0xFFFF6961),
+                    title: 'Dados Pessoais',
+                    subtitle: '${userProvider.nome} • CPF: ${userProvider.cpf}',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const DadosPessoaisTab()),
+                      );
+                    },
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
+                  Consumer<EntregaProvider>(
+                    builder: (context, entregaProvider, _) {
+                      final isCadastrado = entregaProvider.isCadastrado;
+                      return _buildAccountRow(
+                        icon: Icons.two_wheeler_outlined,
+                        iconColor: const Color(0xFFFF6961),
+                        title: 'Veículo & Moto',
+                        subtitle: isCadastrado 
+                            ? '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}'
+                            : 'Toque para cadastrar seu veículo',
+                        onTap: () {
+                          if (isCadastrado) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const EditarVeiculoPage()),
+                            );
+                          } else {
+                            context.push('/cadastro-motoboy');
+                          }
+                        },
+                      );
+                    },
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
+                  _buildAccountRow(
+                    icon: Icons.credit_card_outlined,
+                    iconColor: const Color(0xFFFF6961),
+                    title: 'Dados Bancários',
+                    subtitle: 'PIX (${userProvider.tipoChavePix}): ${userProvider.chavePix}',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const EditarDadosBancariosPage()),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(height: 32.h),
 
-          // Estatísticas do Motoboy no estilo idêntico ao Nhac
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildStatItem('${userProvider.entregas}', 'Entregas'),
-              Container(height: 30.h, width: 1.w, color: Colors.grey.shade300),
-              _buildStatItem('${userProvider.avaliacao}', 'Avaliação'),
-              Container(height: 30.h, width: 1.w, color: Colors.grey.shade300),
-              _buildStatItem('R\$ ${userProvider.ganhos.toStringAsFixed(0)}', 'Ganhos'),
-            ],
-          ),
-          SizedBox(height: 36.h),
-
-          // Seção 1: "Sua Conta"
-          Text(
-            'Sua Conta',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF5D201C),
-              fontFamily: 'Roboto',
+            // Seção 2: "Configurações & Suporte"
+            Text(
+              'Configurações',
+              style: TextStyle(
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF5D201C),
+                fontFamily: 'Roboto',
+              ),
             ),
-          ),
-          SizedBox(height: 16.h),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(24.r),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF5D201C).withValues(alpha: 0.03),
-                  blurRadius: 15.r,
-                  offset: Offset(0, 5.h),
-                ),
-              ],
+            SizedBox(height: 16.h),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.9),
+                borderRadius: BorderRadius.circular(24.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF5D201C).withValues(alpha: 0.03),
+                    blurRadius: 15.r,
+                    offset: Offset(0, 5.h),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  _buildAccountRow(
+                    icon: Icons.notifications_none,
+                    iconColor: const Color(0xFFFF6961),
+                    title: 'Notificações',
+                    subtitle: 'Alertas sonoros de novos pedidos',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Notificações de pedidos ativadas.')),
+                      );
+                    },
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
+                  _buildAccountRow(
+                    icon: Icons.help_outline,
+                    iconColor: const Color(0xFFFF6961),
+                    title: 'Suporte & Ajuda',
+                    subtitle: 'Falar com a equipe Nhac',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Suporte ao entregador disponível 24h.')),
+                      );
+                    },
+                  ),
+                  Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
+                  _buildAccountRow(
+                    icon: Icons.logout,
+                    iconColor: const Color(0xFFFF6961),
+                    title: 'Sair da conta',
+                    subtitle: 'Desconectar deste celular',
+                    onTap: () async {
+                      await ApiConfig.limparSessao();
+                      if (!context.mounted) return;
+                      context.read<CadastroController>().limparDados();
+                      context.read<UserProvider>().limparUsuario();
+                      context.go('/');
+                    },
+                  ),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                _buildAccountRow(
-                  icon: Icons.person_outline,
-                  iconColor: const Color(0xFFFF6961),
-                  title: 'Dados Pessoais',
-                  subtitle: '${userProvider.nome} • CPF: ${userProvider.cpf}',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DadosPessoaisTab()),
-                    );
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
-                Consumer<EntregaProvider>(
-                  builder: (context, entregaProvider, _) {
-                    final isCadastrado = entregaProvider.isCadastrado;
-                    return _buildAccountRow(
-                      icon: Icons.two_wheeler_outlined,
-                      iconColor: const Color(0xFFFF6961),
-                      title: 'Veículo & Moto',
-                      subtitle: isCadastrado 
-                          ? '${userProvider.veiculoModelo} • Placa ${userProvider.veiculoPlaca}'
-                          : 'Toque para cadastrar seu veículo',
-                      onTap: () {
-                        if (isCadastrado) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const EditarVeiculoPage()),
-                          );
-                        } else {
-                          context.push('/cadastro-motoboy');
-                        }
-                      },
-                    );
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
-                _buildAccountRow(
-                  icon: Icons.credit_card_outlined,
-                  iconColor: const Color(0xFFFF6961),
-                  title: 'Dados Bancários',
-                  subtitle: 'PIX (${userProvider.tipoChavePix}): ${userProvider.chavePix}',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const EditarDadosBancariosPage()),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          SizedBox(height: 32.h),
-
-          // Seção 2: "Configurações & Suporte"
-          Text(
-            'Configurações',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF5D201C),
-              fontFamily: 'Roboto',
-            ),
-          ),
-          SizedBox(height: 16.h),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(24.r),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF5D201C).withValues(alpha: 0.03),
-                  blurRadius: 15.r,
-                  offset: Offset(0, 5.h),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildAccountRow(
-                  icon: Icons.notifications_none,
-                  iconColor: const Color(0xFFFF6961),
-                  title: 'Notificações',
-                  subtitle: 'Alertas sonoros de novos pedidos',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Notificações de pedidos ativadas.')),
-                    );
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
-                _buildAccountRow(
-                  icon: Icons.help_outline,
-                  iconColor: const Color(0xFFFF6961),
-                  title: 'Suporte & Ajuda',
-                  subtitle: 'Falar com a equipe Nhac',
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Suporte ao entregador disponível 24h.')),
-                    );
-                  },
-                ),
-                Divider(height: 1, color: Colors.grey.shade100, indent: 64.w),
-                _buildAccountRow(
-                  icon: Icons.logout,
-                  iconColor: const Color(0xFFFF6961),
-                  title: 'Sair da conta',
-                  subtitle: 'Desconectar deste celular',
-                  onTap: () async {
-                    await ApiConfig.limparSessao();
-                    if (!context.mounted) return;
-                    context.read<CadastroController>().limparDados();
-                    context.read<UserProvider>().limparUsuario();
-                    context.go('/');
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

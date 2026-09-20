@@ -78,7 +78,11 @@ class _CriarContaCodigoPageState extends State<CriarContaCodigoPage> {
   @override
   void dispose() {
     _timer?.cancel();
-    _pinController.dispose();
+    _timer = null;
+    // NÃO descartar _pinController aqui: o PinCodeTextField ainda
+    // referencia o controller durante o unmount e dispara
+    // "A TextEditingController was used after being disposed".
+    // O controller é coletado pelo GC quando o widget sai.
     super.dispose();
   }
 

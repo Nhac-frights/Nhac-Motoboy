@@ -313,10 +313,27 @@ class EntregadorService {
             jsonDecode(utf8.decode(response.bodyBytes));
         return GanhosEntregadorModel.fromJson(dados);
       }
+      // 404 = a conta ainda não tem cadastro de entregador — isso é
+      // diferente de zero entregas no período (que o backend já retorna
+      // como 200 com totais zerados) e diferente de um erro de rede/servidor
+      // de verdade. Antes, os três casos caíam no mesmo "retorna null",
+      // e a tela sempre mostrava "Não foi possível carregar seus ganhos
+      // agora" mesmo quando o motivo real era só "você ainda não é
+      // entregador".
+      if (response.statusCode == 404) {
+        throw EntregadorNaoCadastradoException();
+      }
       return null;
+    } on EntregadorNaoCadastradoException {
+      rethrow;
     } catch (e) {
       debugPrint('Erro ao buscar ganhos: $e');
       return null;
     }
   }
 }
+
+/// Sinaliza que o usuário autenticado ainda não tem cadastro de entregador
+/// (GET /entregador/perfil, /ganhos ou /entregas devolveu 404). A UI usa
+/// isto para mostrar "complete seu cadastro" em vez de um erro genérico.
+class EntregadorNaoCadastradoException implements Exception {}
