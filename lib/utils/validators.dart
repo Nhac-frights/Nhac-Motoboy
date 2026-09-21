@@ -58,6 +58,21 @@ class Validators {
     return null;
   }
 
+  static String? validarCodigoRecuperacao(String? value) {
+    final codigo = value?.trim() ?? '';
+    if (codigo.isEmpty) return 'Informe o código';
+    if (!RegExp(r'^\d{6}$').hasMatch(codigo)) {
+      return 'O código deve ter 6 dígitos';
+    }
+    return null;
+  }
+
+  static String? validarSenhaRedefinicao(String? value) {
+    if (value == null || value.isEmpty) return 'Informe a nova senha';
+    if (value.length < 6) return 'Use pelo menos 6 caracteres';
+    return null;
+  }
+
   static String? validarCPF(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'CPF obrigatório';

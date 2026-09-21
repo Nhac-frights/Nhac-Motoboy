@@ -214,7 +214,7 @@ class _ContinuarSenhaState extends State<ContinuarSenha> {
                             label: 'Toque para recuperar sua senha',
                             child: GestureDetector(
                               onTap: () {
-                                context.showInfo('Recuperação de senha em breve.');
+                                context.push('/recuperar-senha');
                               },
                               child: const Text(
                                 'Esqueceu sua senha?',

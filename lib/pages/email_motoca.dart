@@ -104,8 +104,7 @@ class _EmailMotocaPageState extends State<EmailMotocaPage> {
     await Future.delayed(const Duration(seconds: 1));
     if (!mounted) return;
     setState(() => _isGoogleLoading = false);
-    context.showSuccess("Conectado com o Google!");
-    context.go('/home-motoca');
+    context.showInfo('Use seu e-mail ou telefone para entrar. O login Google ainda não está disponível.');
   }
 
   @override
