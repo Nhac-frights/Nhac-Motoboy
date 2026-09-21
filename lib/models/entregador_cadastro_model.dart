@@ -1,5 +1,6 @@
 /// Modelo que representa a resposta do cadastro de entregador
 class EntregadorCadastroModel {
+  final bool ativo;
   final String id;
   final String usuarioId;
   final String? nome;
@@ -9,9 +10,13 @@ class EntregadorCadastroModel {
   final String? placaVeiculo;
   final String? tipoVeiculo; // MOTO | BICICLETA | CARRO
   final String statusOperacional; // OFFLINE | ONLINE | EM_ENTREGA
+  final double? latitudeAtual;
+  final double? longitudeAtual;
+  final DateTime? ultimaAtualizacaoLocalizacao;
   final DateTime? dataCadastro;
 
   EntregadorCadastroModel({
+    this.ativo = true,
     required this.id,
     required this.usuarioId,
     this.nome,
@@ -21,11 +26,15 @@ class EntregadorCadastroModel {
     this.placaVeiculo,
     this.tipoVeiculo,
     required this.statusOperacional,
+    this.latitudeAtual,
+    this.longitudeAtual,
+    this.ultimaAtualizacaoLocalizacao,
     this.dataCadastro,
   });
 
   factory EntregadorCadastroModel.fromJson(Map<String, dynamic> json) {
     return EntregadorCadastroModel(
+      ativo: json['ativo'] == true,
       id: json['id']?.toString() ?? '',
       usuarioId: json['usuarioId']?.toString() ?? '',
       // EntregadorResponseDTO (backend) já manda nome/email/telefone do
@@ -39,6 +48,11 @@ class EntregadorCadastroModel {
       placaVeiculo: json['placaVeiculo']?.toString(),
       tipoVeiculo: json['tipoVeiculo']?.toString(),
       statusOperacional: json['statusOperacional']?.toString() ?? 'OFFLINE',
+      latitudeAtual: (json['latitudeAtual'] as num?)?.toDouble(),
+      longitudeAtual: (json['longitudeAtual'] as num?)?.toDouble(),
+      ultimaAtualizacaoLocalizacao: json['ultimaAtualizacaoLocalizacao'] != null
+          ? DateTime.tryParse(json['ultimaAtualizacaoLocalizacao'].toString())
+          : null,
       dataCadastro: json['dataCadastro'] != null
           ? DateTime.parse(json['dataCadastro'].toString())
           : null,

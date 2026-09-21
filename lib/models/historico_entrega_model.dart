@@ -1,3 +1,5 @@
+import 'status.dart';
+
 /// Espelha EntregaHistoricoDTO (backend, domain/entregador/dto).
 class HistoricoEntregaModel {
   final String pedidoId;
@@ -5,7 +7,7 @@ class HistoricoEntregaModel {
   final String? bairroEntrega;
   final String? cidadeEntrega;
   final double? taxaFrete;
-  final String status;
+  final StatusPedido status;
   final DateTime? coletadoEm;
   final DateTime? entregueEm;
   final DateTime? criadoEm;
@@ -29,7 +31,7 @@ class HistoricoEntregaModel {
       bairroEntrega: json['bairroEntrega'] as String?,
       cidadeEntrega: json['cidadeEntrega'] as String?,
       taxaFrete: (json['taxaFrete'] as num?)?.toDouble(),
-      status: json['status'] as String? ?? 'DESCONHECIDO',
+      status: StatusPedido.parse(json['status']),
       coletadoEm: json['coletadoEm'] != null ? DateTime.tryParse(json['coletadoEm'] as String) : null,
       entregueEm: json['entregueEm'] != null ? DateTime.tryParse(json['entregueEm'] as String) : null,
       criadoEm: json['criadoEm'] != null ? DateTime.tryParse(json['criadoEm'] as String) : null,
@@ -37,7 +39,7 @@ class HistoricoEntregaModel {
   }
 }
 
-/// Espelha a resposta paginada padrão do Spring Data (Page<T>) para o
+/// Espelha a resposta paginada padrão do Spring Data (`Page<T>`) para o
 /// endpoint GET /api/v1/entregador/entregas.
 class HistoricoEntregasPagina {
   final List<HistoricoEntregaModel> itens;

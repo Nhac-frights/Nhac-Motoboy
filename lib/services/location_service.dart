@@ -17,14 +17,14 @@ class LocationService {
   ///
   /// Retorna null se tudo estiver ok, ou uma mensagem pronta pra exibir ao
   /// usuário explicando por que a localização não está disponível.
-  Future<String?> solicitarPermissao() async {
+  Future<String?> solicitarPermissao({bool request = true}) async {
     final servicoAtivo = await Geolocator.isLocationServiceEnabled();
     if (!servicoAtivo) {
       return 'Ative o GPS do aparelho para ficar online e receber corridas.';
     }
 
     LocationPermission permissao = await Geolocator.checkPermission();
-    if (permissao == LocationPermission.denied) {
+    if (permissao == LocationPermission.denied && request) {
       permissao = await Geolocator.requestPermission();
     }
 
