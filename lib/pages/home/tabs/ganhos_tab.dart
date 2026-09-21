@@ -39,6 +39,7 @@ class _GanhosTabState extends State<GanhosTab> {
   bool _carregando = true;
   bool _naoEhEntregador = false;
   String? _erro;
+  int _requestId = 0;
 
   @override
   void initState() {
@@ -47,6 +48,7 @@ class _GanhosTabState extends State<GanhosTab> {
   }
 
   Future<void> _carregarGanhos() async {
+    final requestId = ++_requestId;
     setState(() {
       _carregando = true;
       _erro = null;
@@ -55,7 +57,7 @@ class _GanhosTabState extends State<GanhosTab> {
 
     try {
       final resultado = await _service.buscarGanhos(periodo: _periodoSelecionado.chaveApi);
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       setState(() {
         _carregando = false;
         if (resultado != null) {
@@ -69,11 +71,14 @@ class _GanhosTabState extends State<GanhosTab> {
       // problema de rede de verdade — mas a pessoa só ainda não completou
       // o cadastro de entregador, o que não é bem um "erro" do ponto de
       // vista dela.
-      if (!mounted) return;
+      if (!mounted || requestId != _requestId) return;
       setState(() {
         _carregando = false;
         _naoEhEntregador = true;
       });
+    } catch (e) {
+      if (!mounted || requestId != _requestId) return;
+      setState(() { _carregando = false; _erro = e.toString(); });
     }
   }
 

@@ -66,5 +66,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>O Nhac usa sua localização para encontrar entregas próximas e acompanhar sua corrida enquanto o aplicativo está aberto.</string>
 </dict>
 </plist>

@@ -6,7 +6,6 @@
          botão online nunca chega a chamar o backend. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <!-- Permissão de internet, usada por todas as chamadas HTTP ao backend -->
     <uses-permission android:name="android.permission.INTERNET" />
