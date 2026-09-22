@@ -43,7 +43,9 @@ class PerfilTab extends StatelessWidget {
             SizedBox(height: 4.h),
             Text(profile == null ? 'Complete seu cadastro de entregador'
                 : '${profile.tipoVeiculo ?? 'Veículo'} • Placa ${profile.placaVeiculo ?? '—'}',
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.subtitulo()),
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontFamily: 'Roboto', fontSize: 12.sp,
+                    color: Colors.grey.shade700)),
           ])),
         ]),
         SizedBox(height: 32.h),
@@ -143,7 +145,9 @@ class _AccountRow extends StatelessWidget {
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(title, style: TextStyle(fontFamily: 'Roboto', fontSize: 15.sp, fontWeight: FontWeight.w600, color: AppColors.texto)),
         SizedBox(height: 2.h),
-        Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.subtitulo()),
+        Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontFamily: 'Roboto', fontSize: 12.sp,
+            color: Colors.grey.shade600)),
       ])),
       if (onTap != null) Icon(Icons.chevron_right, color: Colors.grey.shade400),
     ])));

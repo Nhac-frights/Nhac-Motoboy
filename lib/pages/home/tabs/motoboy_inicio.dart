@@ -26,7 +26,8 @@ class NhacCard extends StatelessWidget {
 }
 
 class MotoboyInicio extends StatelessWidget {
-  const MotoboyInicio({super.key});
+  final ValueChanged<bool> onToggleOnline;
+  const MotoboyInicio({super.key, required this.onToggleOnline});
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +84,7 @@ class MotoboyInicio extends StatelessWidget {
                     ),
                     SizedBox(width: 10.w),
                     Expanded(child: Text(
+                      p.isChangingStatus ? (p.estaOnline ? 'SAINDO...' : 'CONECTANDO...') :
                       p.emEntrega ? 'EM ENTREGA' : p.estaOnline ? 'ONLINE PARA PEDIDOS' : 'VOCÊ ESTÁ OFFLINE',
                       key: const Key('motoboy-status-text'),
                       style: TextStyle(fontFamily: 'Roboto', fontSize: 14.sp,
@@ -95,11 +97,12 @@ class MotoboyInicio extends StatelessWidget {
                         value: p.estaOnline,
                         activeThumbColor: AppColors.primaria,
                         activeTrackColor: AppColors.secundaria,
-                        onChanged: p.isLoading ? null : p.alternarStatusOnline,
+                        onChanged: p.isLoading ? null : onToggleOnline,
                       ),
                   ]),
                   SizedBox(height: 12.h),
                   Text(
+                    p.isChangingStatus ? 'Atualizando sua disponibilidade...' :
                     !p.cadastroAtivo ? 'Seu cadastro está inativo.' :
                     p.emEntrega ? 'Sua disponibilidade é controlada pela corrida ativa.' :
                     p.estaOnline ? 'Procurando chamadas de restaurantes próximos a você...' :

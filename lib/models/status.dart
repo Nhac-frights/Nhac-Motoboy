@@ -17,5 +17,6 @@ enum StatusOperacional {
   final String label;
   const StatusOperacional(this.api, this.label);
   static StatusOperacional parse(Object? value) => values.firstWhere(
-    (s) => s.api == value, orElse: () => desconhecido);
+    (s) => s.api == value?.toString().trim().toUpperCase(),
+    orElse: () => desconhecido);
 }

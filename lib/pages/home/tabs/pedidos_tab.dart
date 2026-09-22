@@ -95,7 +95,10 @@ class _PedidosTabState extends State<PedidosTab> {
           Text('Histórico recente', style: TextStyle(fontFamily: 'Roboto', fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.texto)),
           SizedBox(height: 12.h),
           if (_loading)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: AppColors.primaria)),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
+            ),
           if (_error != null)
             Padding(
               padding: EdgeInsets.symmetric(vertical: 8.h),
