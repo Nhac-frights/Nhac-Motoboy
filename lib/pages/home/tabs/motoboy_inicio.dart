@@ -40,12 +40,17 @@ class MotoboyInicio extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 120.h),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Text('Olá, Parceiro Motoca! 🛵', style: AppTextStyles.titulo()),
+          Text(user.nome.trim().isEmpty ? 'Olá, Parceiro Motoca! 🛵'
+              : 'Olá, ${user.nome.trim()}! 🛵',
+            style: AppTextStyles.titulo()),
           SizedBox(height: 4.h),
           Text(user.email.isEmpty ? 'Pronto para as entregas de hoje?' : user.email, style: AppTextStyles.subtitulo()),
           SizedBox(height: 24.h),
           if (!p.inicializado)
-            const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: AppColors.primaria)),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
+            ),
           if (p.erro != null) _Notice(p.erro!, action: p.sincronizar),
           if (p.aviso != null) _Notice(p.aviso!),
           if (p.inicializado && p.erro == null && !p.isCadastrado)

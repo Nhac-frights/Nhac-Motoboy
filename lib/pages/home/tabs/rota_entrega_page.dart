@@ -98,7 +98,10 @@ class RotaEntregaPage extends StatelessWidget {
                         Text(active.statusPedido.label, key: const Key('corrida-status-text'), style: AppTextStyles.titulo()),
                         SizedBox(height: 12.h),
                         if (p.isLoading)
-                          const Padding(padding: EdgeInsets.symmetric(vertical: 4), child: LinearProgressIndicator(color: AppColors.primaria)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
+                          ),
                         if (p.erro != null)
                           Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.h),

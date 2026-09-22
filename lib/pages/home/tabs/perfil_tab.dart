@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -27,15 +28,32 @@ class PerfilTab extends StatelessWidget {
         ]),
         SizedBox(height: 32.h),
         Row(children: [
-          Container(
-            width: 80.r, height: 80.r,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white,
-              boxShadow: [BoxShadow(color: AppColors.texto.withValues(alpha: 0.1), blurRadius: 10.r, offset: Offset(0, 4.h))]),
-            child: ClipOval(child: user.fotoPerfil?.startsWith('http') == true
-                ? Image.network(user.fotoPerfil!, fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Icon(Icons.two_wheeler_rounded, size: 44.r, color: AppColors.primaria))
-                : Icon(Icons.two_wheeler_rounded, size: 44.r, color: AppColors.primaria)),
-          ),
+          Stack(children: [
+            InkWell(
+              onTap: () => context.push('/editar-foto'),
+              customBorder: const CircleBorder(),
+              child: Container(
+                width: 80.r, height: 80.r,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white,
+                  boxShadow: [BoxShadow(color: AppColors.texto.withValues(alpha: 0.1), blurRadius: 10.r, offset: Offset(0, 4.h))]),
+                child: ClipOval(child: user.fotoPerfil == null
+                    ? Icon(Icons.two_wheeler_rounded, size: 44.r, color: AppColors.primaria)
+                    : user.fotoPerfil!.startsWith('http')
+                        ? Image.network(user.fotoPerfil!, fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(Icons.two_wheeler_rounded, size: 44.r, color: AppColors.primaria))
+                        : Image.file(File(user.fotoPerfil!), fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(Icons.two_wheeler_rounded, size: 44.r, color: AppColors.primaria))),
+              ),
+            ),
+            Positioned(bottom: 0, right: 0, child: Semantics(
+              button: true, label: 'Alterar foto de perfil',
+              child: InkWell(onTap: () => context.push('/editar-foto'),
+                customBorder: const CircleBorder(),
+                child: Container(padding: EdgeInsets.all(6.r),
+                  decoration: const BoxDecoration(color: AppColors.texto, shape: BoxShape.circle),
+                  child: Icon(Icons.edit_rounded, size: 14.r, color: Colors.white))),
+            )),
+          ]),
           SizedBox(width: 16.w),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(user.nome.isEmpty ? 'Parceiro Motoca' : user.nome,
@@ -49,7 +67,11 @@ class PerfilTab extends StatelessWidget {
           ])),
         ]),
         SizedBox(height: 32.h),
-        if (user.isLoading) const LinearProgressIndicator(color: AppColors.primaria),
+        if (user.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
+          ),
         if (user.erro != null) TextButton(onPressed: user.carregarDadosReais,
             child: Text('${user.erro} Tentar novamente')),
         SizedBox(height: 20.h),
