@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
+import '../../components/home/nhac_bottom_nav_bar.dart';
+import '../../components/home/status_toggle_button.dart';
 import '../../controllers/entrega_provider.dart';
 import '../../controllers/user_provider.dart';
 import '../../globals/theme_colors.dart';
@@ -17,13 +18,13 @@ class HomeMotocaPage extends StatefulWidget {
 }
 
 class _HomeMotocaPageState extends State<HomeMotocaPage> {
-  int _tab = 0;
-
-  static const _titulos = ['Nhac • Parceiro Motoca', 'Corridas', 'Ganhos', 'Perfil'];
+  int _selectedIndex = 0;
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       context.read<UserProvider>().carregarDadosReais();
@@ -32,69 +33,89 @@ class _HomeMotocaPageState extends State<HomeMotocaPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() => _selectedIndex = index);
+    _pageController.animateToPage(index,
+        duration: const Duration(milliseconds: 350), curve: Curves.fastOutSlowIn);
+  }
+
+  Future<void> _alterarStatusOnline(bool online) async {
+    final entrega = context.read<EntregaProvider>();
+    if (entrega.isSyncing) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Aguarde a sincronização terminar e tente novamente.'),
+      ));
+      return;
+    }
+    await entrega.alternarStatusOnline(online);
+    if (!mounted || entrega.estaOnline == online || entrega.emEntrega) return;
+    final mensagem = entrega.erroLocalizacao ?? entrega.erro ??
+        'Não foi possível confirmar sua disponibilidade. Tente novamente.';
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(mensagem),
+      backgroundColor: Colors.redAccent,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final entrega = context.watch<EntregaProvider>();
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    return Scaffold(
+      backgroundColor: AppColors.fundo,
+      extendBody: true,
+      appBar: _selectedIndex == 3 ? null : AppBar(
+        centerTitle: true,
+        elevation: 0,
         backgroundColor: AppColors.fundo,
-        appBar: AppBar(
-          backgroundColor: AppColors.fundo,
-          elevation: 0,
-          centerTitle: false,
-          title: Text(
-            _titulos[_tab],
-            style: TextStyle(
-              fontFamily: 'Roboto',
-              fontWeight: FontWeight.w700,
-              fontSize: 18.sp,
-              color: AppColors.texto,
+        title: Padding(
+          padding: EdgeInsets.only(top: 8.h),
+          child: IgnorePointer(
+            ignoring: !entrega.cadastroAtivo || entrega.emEntrega || entrega.isLoading,
+            child: StatusToggleButton(
+              estaOnline: entrega.estaOnline,
+              carregando: entrega.isChangingStatus,
+              onChanged: _alterarStatusOnline,
             ),
           ),
         ),
-        body: SafeArea(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: switch (_tab) {
-                1 => const PedidosTab(),
-                2 => const GanhosTab(),
-                3 => const PerfilTab(),
-                _ => const MotoboyInicio(),
-              },
-            ),
+        actions: [
+          IconButton(
+            tooltip: 'Sair da conta',
+            icon: Icon(Icons.logout_rounded, color: AppColors.texto, size: 24.r),
+            onPressed: entrega.sair,
+          ),
+          SizedBox(width: 8.w),
+        ],
+      ),
+      body: Stack(children: [
+        PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          onPageChanged: (index) => setState(() => _selectedIndex = index),
+          children: [
+            MotoboyInicio(onToggleOnline: _alterarStatusOnline),
+            const PedidosTab(),
+            const GanhosTab(),
+            const PerfilTab(),
+          ],
+        ),
+        Positioned(
+          bottom: bottomPadding + 16.h,
+          left: 20.w,
+          right: 20.w,
+          child: NhacBottomNavBar(
+            selectedIndex: _selectedIndex,
+            onItemSelected: _onItemTapped,
           ),
         ),
-        bottomNavigationBar: NavigationBarTheme(
-          data: NavigationBarThemeData(
-            backgroundColor: Colors.white,
-            indicatorColor: AppColors.primaria.withValues(alpha: 0.15),
-            labelTextStyle: WidgetStateProperty.resolveWith(
-              (states) => TextStyle(
-                fontFamily: 'Roboto',
-                fontSize: 12.sp,
-                fontWeight: FontWeight.w600,
-                color: states.contains(WidgetState.selected) ? AppColors.primaria : AppColors.desabilitado,
-              ),
-            ),
-            iconTheme: WidgetStateProperty.resolveWith(
-              (states) => IconThemeData(
-                color: states.contains(WidgetState.selected) ? AppColors.primaria : AppColors.desabilitado,
-              ),
-            ),
-          ),
-          child: NavigationBar(
-            selectedIndex: _tab,
-            onDestinationSelected: (value) => setState(() => _tab = value),
-            elevation: 8,
-            destinations: const [
-              NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Início'),
-              NavigationDestination(
-                key: Key('historico-button'),
-                icon: Icon(Icons.receipt_long_outlined),
-                selectedIcon: Icon(Icons.receipt_long_rounded),
-                label: 'Corridas',
-              ),
-              NavigationDestination(icon: Icon(Icons.payments_outlined), selectedIcon: Icon(Icons.payments_rounded), label: 'Ganhos'),
-              NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person_rounded), label: 'Perfil'),
-            ],
-          ),
-        ),
-      );
+      ]),
+    );
+  }
 }

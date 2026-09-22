@@ -45,7 +45,11 @@ class _ChatPageState extends State<ChatPage> {
             ),
             body: SafeArea(
               child: Column(children: [
-                if (p.loading) const LinearProgressIndicator(color: AppColors.primaria),
+                if (p.loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
+                  ),
                 if (!p.connected)
                   Padding(
                     padding: EdgeInsets.symmetric(vertical: 8.h),

@@ -25,6 +25,10 @@ void main() {
     expect(profile('EM_ENTREGA').statusOperacional, 'EM_ENTREGA');
     expect(profile().ativo, true);
   });
+  test('interpreta status operacional mesmo com caixa e espaços diferentes', () {
+    expect(StatusOperacional.parse(' online '), StatusOperacional.online);
+    expect(StatusOperacional.parse('OFFLINE'), StatusOperacional.offline);
+  });
   test('perfil preserva localização e instante retornados pelo backend', () {
     final model = EntregadorCadastroModel.fromJson({
       ...profileJson(),

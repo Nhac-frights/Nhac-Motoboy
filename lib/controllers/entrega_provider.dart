@@ -30,6 +30,7 @@ class EntregaProvider extends ChangeNotifier with WidgetsBindingObserver {
   RotaModel? _rota;
   final List<OfertaEntregaModel> _ofertas = [];
   bool _busy = false, _syncing = false, _gpsBusy = false, _disposed = false, _foreground = true;
+  bool _changingStatus = false;
   bool inicializado = false;
   int _epoch = 0;
   String? erro, aviso, erroRota, erroLocalizacao;
@@ -41,6 +42,8 @@ class EntregaProvider extends ChangeNotifier with WidgetsBindingObserver {
   bool get estaOnline => _status == StatusOperacional.online;
   bool get emEntrega => _status == StatusOperacional.emEntrega || _entrega != null;
   bool get isLoading => _busy;
+  bool get isSyncing => _syncing;
+  bool get isChangingStatus => _changingStatus;
   bool get isCadastrado => _perfil != null;
   bool get cadastroAtivo => _perfil?.ativo == true;
   EntregadorCadastroModel? get perfilEntregador => _perfil;
@@ -58,7 +61,7 @@ class EntregaProvider extends ChangeNotifier with WidgetsBindingObserver {
     _epoch++; _stop();
     _perfil = null; _entrega = null; _rota = null; _ofertas.clear();
     _status = StatusOperacional.offline;
-    _busy = false; _syncing = false; _gpsBusy = false; inicializado = false;
+    _busy = false; _syncing = false; _gpsBusy = false; _changingStatus = false; inicializado = false;
     latitudeAtual = null; longitudeAtual = null;
     erro = null; aviso = null; erroRota = null; erroLocalizacao = null;
     _notify();
@@ -126,7 +129,7 @@ class EntregaProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
   Future<void> alternarStatusOnline(bool online) async {
     if (_busy || _syncing || emEntrega || !cadastroAtivo) return;
-    _busy = true; erro = null; _notify();
+    _busy = true; _changingStatus = true; erro = null; _notify();
     final epoch = _epoch;
     try {
       if (online && !await atualizarLocalizacao(solicitar: true)) return;
@@ -135,7 +138,7 @@ class EntregaProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (!_valid(epoch)) return;
       _applyProfile(profile); _start();
     } catch (e) { if (_valid(epoch)) erro = e.toString(); }
-    finally { if (_valid(epoch)) { _busy = false; _notify(); } }
+    finally { if (_valid(epoch)) { _busy = false; _changingStatus = false; _notify(); } }
     if (_valid(epoch) && _foreground) await sincronizar();
   }
   Future<bool> atualizarLocalizacao({bool solicitar = false}) async {

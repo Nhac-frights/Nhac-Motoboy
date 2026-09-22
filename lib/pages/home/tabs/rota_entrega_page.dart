@@ -63,8 +63,12 @@ class RotaEntregaPage extends StatelessWidget {
           icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.texto, size: 20.r),
           onPressed: () => context.canPop() ? context.pop() : context.go('/home-motoca'),
         ),
-        title: Text('Sua corrida',
-            style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 18.sp, color: AppColors.texto)),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(active == null ? 'Rota de Entrega' : 'Entrega #${active.pedidoId.length > 8 ? active.pedidoId.substring(0, 8) : active.pedidoId}',
+            style: TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.w700, fontSize: 16.sp, color: AppColors.texto)),
+          if (active != null) Text(p.entregaColetada ? 'Em transporte' : 'A caminho da loja',
+            style: TextStyle(fontFamily: 'Roboto', fontSize: 12.sp, color: p.entregaColetada ? const Color(0xFF2E7D32) : AppColors.primaria)),
+        ]),
       ),
       body: SafeArea(
         child: Center(
@@ -94,28 +98,15 @@ class RotaEntregaPage extends StatelessWidget {
                         Text(active.statusPedido.label, key: const Key('corrida-status-text'), style: AppTextStyles.titulo()),
                         SizedBox(height: 12.h),
                         if (p.isLoading)
-                          const Padding(padding: EdgeInsets.symmetric(vertical: 4), child: LinearProgressIndicator(color: AppColors.primaria)),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Center(child: CircularProgressIndicator(color: AppColors.primaria)),
+                          ),
                         if (p.erro != null)
                           Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.h),
                             child: Text(p.erro!, style: const TextStyle(color: Colors.red)),
                           ),
-                        _InfoCard(icone: Icons.store_rounded, titulo: active.lojaNome, subtitulo: active.lojaEndereco),
-                        SizedBox(height: 10.h),
-                        _InfoCard(
-                          icone: Icons.person_pin_circle_rounded,
-                          titulo: active.clienteNome,
-                          subtitulo: active.enderecoEntrega?.formatado ?? 'Endereço indisponível',
-                        ),
-                        if (active.observacao?.isNotEmpty == true) ...[
-                          SizedBox(height: 10.h),
-                          Text('Observação: ${active.observacao}', style: AppTextStyles.subtitulo()),
-                        ],
-                        SizedBox(height: 16.h),
-                        Text(
-                          'Frete: R\$ ${active.taxaFrete.toStringAsFixed(2)}',
-                          style: TextStyle(fontFamily: 'Roboto', fontSize: 16.sp, fontWeight: FontWeight.w700, color: AppColors.texto),
-                        ),
                         if (p.rotaAtual != null) ...[
                           SizedBox(height: 16.h),
                           ClipRRect(
@@ -137,6 +128,29 @@ class RotaEntregaPage extends StatelessWidget {
                               child: Text(p.erroRota == null ? 'Carregar mapa da corrida' : '${p.erroRota} Tentar novamente'),
                             ),
                           ),
+                        SizedBox(height: 20.h),
+                        _InfoCard(icone: Icons.storefront_rounded, rotulo: 'Ponto de Retirada (Restaurante)', titulo: active.lojaNome, subtitulo: active.lojaEndereco, destaque: !p.entregaColetada),
+                        SizedBox(height: 10.h),
+                        _InfoCard(
+                          icone: Icons.home_rounded,
+                          rotulo: 'Ponto de Entrega (Cliente)',
+                          destaque: p.entregaColetada,
+                          titulo: active.clienteNome,
+                          subtitulo: active.enderecoEntrega?.formatado ?? 'Endereço indisponível',
+                        ),
+                        if (active.observacao?.isNotEmpty == true) ...[
+                          SizedBox(height: 10.h),
+                          Text('Observação: ${active.observacao}', style: AppTextStyles.subtitulo()),
+                        ],
+                        SizedBox(height: 16.h),
+                        Container(padding: EdgeInsets.all(16.r),
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16.r),
+                            border: Border.all(color: AppColors.bordaInativa)),
+                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text('Seu ganho no frete:', style: AppTextStyles.subtitulo()),
+                            Text('R\$ ${active.taxaFrete.toStringAsFixed(2)}',
+                              style: TextStyle(fontFamily: 'Roboto', fontSize: 20.sp, fontWeight: FontWeight.w800, color: const Color(0xFF2E7D32))),
+                          ])),
                         SizedBox(height: 20.h),
                         BotaoLargoNhac(
                           texto: 'Abrir navegação',
@@ -197,14 +211,16 @@ class RotaEntregaPage extends StatelessWidget {
 
 class _InfoCard extends StatelessWidget {
   final IconData icone;
-  final String titulo, subtitulo;
-  const _InfoCard({required this.icone, required this.titulo, required this.subtitulo});
+  final String titulo, subtitulo, rotulo;
+  final bool destaque;
+  const _InfoCard({required this.icone, required this.rotulo, required this.titulo, required this.subtitulo, this.destaque = false});
   @override
   Widget build(BuildContext context) => Container(
         padding: EdgeInsets.all(16.r),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16.r),
+          border: destaque ? Border.all(color: icone == Icons.storefront_rounded ? AppColors.primaria : const Color(0xFF2E7D32), width: 1.5) : null,
           boxShadow: [BoxShadow(color: AppColors.texto.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
         ),
         child: Row(children: [
@@ -219,6 +235,8 @@ class _InfoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(rotulo, style: TextStyle(fontFamily: 'Roboto', fontSize: 12.sp, color: AppColors.desabilitado)),
+                SizedBox(height: 8.h),
                 Text(titulo, style: TextStyle(fontFamily: 'Roboto', fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.texto)),
                 SizedBox(height: 2.h),
                 Text(subtitulo, style: AppTextStyles.subtitulo()),
