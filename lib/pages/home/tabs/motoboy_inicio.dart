@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../../components/botoes/botao_largo_nhac.dart';
 import '../../../components/entrega/oferta_card.dart';
 import '../../../controllers/entrega_provider.dart';
 import '../../../controllers/user_provider.dart';
@@ -37,13 +36,13 @@ class MotoboyInicio extends StatelessWidget {
       onRefresh: p.sincronizar,
       color: AppColors.primaria,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 32.h),
+        padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 120.h),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Text(user.nome.isEmpty ? 'Olá, parceiro!' : 'Olá, ${user.nome}', style: AppTextStyles.titulo()),
+          Text('Olá, Parceiro Motoca! 🛵', style: AppTextStyles.titulo()),
           SizedBox(height: 4.h),
-          Text('Pronto para acelerar hoje?', style: AppTextStyles.subtitulo()),
-          SizedBox(height: 20.h),
+          Text(user.email.isEmpty ? 'Pronto para as entregas de hoje?' : user.email, style: AppTextStyles.subtitulo()),
+          SizedBox(height: 24.h),
           if (!p.inicializado)
             const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: AppColors.primaria)),
           if (p.erro != null) _Notice(p.erro!, action: p.sincronizar),
@@ -74,30 +73,39 @@ class MotoboyInicio extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(p.status.label,
+                  Row(children: [
+                    Container(
+                      width: 14.r, height: 14.r,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: p.estaOnline ? const Color(0xFF4CAF50) : AppColors.desabilitado,
+                      ),
+                    ),
+                    SizedBox(width: 10.w),
+                    Expanded(child: Text(
+                      p.emEntrega ? 'EM ENTREGA' : p.estaOnline ? 'ONLINE PARA PEDIDOS' : 'VOCÊ ESTÁ OFFLINE',
                       key: const Key('motoboy-status-text'),
-                      style: TextStyle(fontFamily: 'Roboto', fontSize: 20.sp, fontWeight: FontWeight.w700, color: AppColors.texto)),
-                  SizedBox(height: 8.h),
+                      style: TextStyle(fontFamily: 'Roboto', fontSize: 14.sp,
+                        fontWeight: FontWeight.w700, letterSpacing: 0.5,
+                        color: p.estaOnline ? const Color(0xFF2E7D32) : AppColors.desabilitado),
+                    )),
+                    if (!p.emEntrega && p.cadastroAtivo)
+                      Switch(
+                        key: const Key('motoboy-status-toggle'),
+                        value: p.estaOnline,
+                        activeThumbColor: AppColors.primaria,
+                        activeTrackColor: AppColors.secundaria,
+                        onChanged: p.isLoading ? null : p.alternarStatusOnline,
+                      ),
+                  ]),
+                  SizedBox(height: 12.h),
                   Text(
-                    !p.cadastroAtivo
-                        ? 'Seu cadastro está inativo.'
-                        : p.emEntrega
-                            ? 'Sua disponibilidade é controlada pela corrida ativa.'
-                            : p.estaOnline
-                                ? 'Aguardando novas entregas.'
-                                : 'Fique online para receber ofertas.',
+                    !p.cadastroAtivo ? 'Seu cadastro está inativo.' :
+                    p.emEntrega ? 'Sua disponibilidade é controlada pela corrida ativa.' :
+                    p.estaOnline ? 'Procurando chamadas de restaurantes próximos a você...' :
+                    'Ative o interruptor acima para começar a receber pedidos de entrega.',
                     style: AppTextStyles.subtitulo(),
                   ),
-                  if (!p.emEntrega && p.cadastroAtivo) ...[
-                    SizedBox(height: 16.h),
-                    BotaoLargoNhac(
-                      key: const Key('motoboy-status-toggle'),
-                      texto: p.estaOnline ? 'Ficar offline' : 'Ficar online',
-                      carregando: p.isLoading,
-                      isSecundario: p.estaOnline,
-                      onPressed: p.isLoading ? null : () => p.alternarStatusOnline(!p.estaOnline),
-                    ),
-                  ],
                 ],
               ),
             ),

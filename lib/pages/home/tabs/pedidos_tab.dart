@@ -74,21 +74,26 @@ class _PedidosTabState extends State<PedidosTab> {
       onRefresh: () => _load(reset: true),
       color: AppColors.primaria,
       child: ListView(
-        padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 32.h),
+        padding: EdgeInsets.fromLTRB(24.w, 16.h, 24.w, 120.h),
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Text('Suas corridas', style: AppTextStyles.titulo()),
-          SizedBox(height: 16.h),
+          Text('Seus Pedidos', style: AppTextStyles.titulo()),
+          SizedBox(height: 8.h),
+          Text('Acompanhe e gerencie as corridas ativas', style: AppTextStyles.subtitulo()),
+          SizedBox(height: 24.h),
           if (p.entregaAtiva != null)
             Padding(
               padding: EdgeInsets.only(bottom: 12.h),
               child: _CorridaCard(
                 icone: Icons.two_wheeler_rounded,
-                titulo: 'Corrida ativa',
-                subtitulo: p.entregaAtiva!.statusPedido.label,
+                titulo: p.entregaAtiva!.lojaNome,
+                subtitulo: 'Entregar para: ${p.entregaAtiva!.clienteNome} • ${p.entregaAtiva!.statusPedido.label}',
                 onTap: () => context.push('/rota-entrega'),
               ),
             ),
+          SizedBox(height: 18.h),
+          Text('Histórico recente', style: TextStyle(fontFamily: 'Roboto', fontSize: 15.sp, fontWeight: FontWeight.w700, color: AppColors.texto)),
+          SizedBox(height: 12.h),
           if (_loading)
             const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: AppColors.primaria)),
           if (_error != null)
@@ -104,7 +109,7 @@ class _PedidosTabState extends State<PedidosTab> {
             Padding(
               padding: EdgeInsets.symmetric(vertical: 32.h),
               child: Text(
-                'Você ainda não tem corridas no histórico.',
+                'Nenhuma entrega concluída ainda.',
                 key: const Key('historico-empty'),
                 textAlign: TextAlign.center,
                 style: AppTextStyles.subtitulo(),
@@ -151,8 +156,9 @@ class _CorridaCard extends StatelessWidget {
         padding: EdgeInsets.all(16.r),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16.r),
-          boxShadow: [BoxShadow(color: AppColors.texto.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+          borderRadius: BorderRadius.circular(20.r),
+          border: onTap == null ? null : Border.all(color: AppColors.primaria.withValues(alpha: 0.3), width: 1.5),
+          boxShadow: [BoxShadow(color: AppColors.primaria.withValues(alpha: 0.08), blurRadius: 14, offset: const Offset(0, 5))],
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.r),
