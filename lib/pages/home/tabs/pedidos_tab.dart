@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../../controllers/entrega_provider.dart';
+import '../../../globals/theme_colors.dart';
 import '../../../models/historico_entrega_model.dart';
 import '../../../services/entregador_service.dart';
 
@@ -10,14 +12,20 @@ class PedidosTab extends StatefulWidget {
   @override
   State<PedidosTab> createState() => _PedidosTabState();
 }
+
 class _PedidosTabState extends State<PedidosTab> {
   final _service = EntregadorService();
   final List<HistoricoEntregaModel> _items = [];
   bool _loading = false, _last = false;
   int _page = 0;
   String? _error;
+
   @override
-  void initState() { super.initState(); _load(reset: true); }
+  void initState() {
+    super.initState();
+    _load(reset: true);
+  }
+
   Future<void> _load({bool reset = false}) async {
     if (_loading) return;
     setState(() { _loading = true; _error = null; });
@@ -26,32 +34,149 @@ class _PedidosTabState extends State<PedidosTab> {
       if (!mounted) return;
       setState(() {
         if (reset) _items.clear();
-        _items.addAll(page.itens); _page = page.paginaAtual + 1; _last = page.ultima;
+        _items.addAll(page.itens);
+        _page = page.paginaAtual + 1;
+        _last = page.ultima;
       });
-    } catch (e) { if (mounted) setState(() => _error = e.toString()); }
-    finally { if (mounted) setState(() => _loading = false); }
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
+
   @override
   Widget build(BuildContext context) {
     final p = context.watch<EntregaProvider>();
     if (!p.isCadastrado) {
-      return Center(child: TextButton(onPressed: () => context.push('/cadastro-motoboy'),
-      child: const Text('Complete seu cadastro para acompanhar suas corridas.')));
+      return Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.r),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.receipt_long_outlined, size: 40.r, color: AppColors.bordaInativa),
+            SizedBox(height: 12.h),
+            Text(
+              'Complete seu cadastro para acompanhar suas corridas.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.subtitulo(),
+            ),
+            SizedBox(height: 12.h),
+            TextButton(
+              onPressed: () => context.push('/cadastro-motoboy'),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primaria),
+              child: const Text('Completar cadastro'),
+            ),
+          ]),
+        ),
+      );
     }
-    return RefreshIndicator(onRefresh: () => _load(reset: true), child: ListView(
-      padding: const EdgeInsets.all(20), physics: const AlwaysScrollableScrollPhysics(), children: [
-        Text('Suas corridas', style: Theme.of(context).textTheme.headlineSmall),
-        if (p.entregaAtiva != null) Card(child: ListTile(title: const Text('Corrida ativa'),
-          subtitle: Text(p.entregaAtiva!.statusPedido.label), onTap: () => context.push('/rota-entrega'))),
-        if (_loading) const LinearProgressIndicator(),
-        if (_error != null) TextButton(onPressed: () => _load(reset: _items.isEmpty), child: Text('$_error Tentar novamente')),
-        if (!_loading && _error == null && _items.isEmpty) const Padding(padding: EdgeInsets.all(24),
-          child: Text('Você ainda não tem corridas no histórico.', key: Key('historico-empty'))),
-        for (final item in _items) Card(child: ListTile(
-          title: Text(item.lojaNome ?? 'Loja'),
-          subtitle: Text('${item.status.label}\n${[item.bairroEntrega, item.cidadeEntrega].whereType<String>().join(', ')}\n${item.entregueEm?.toLocal() ?? item.criadoEm?.toLocal() ?? ''}'),
-          trailing: Text(item.taxaFrete == null ? '—' : 'R\$ ${item.taxaFrete!.toStringAsFixed(2)}'))),
-        if (!_last && !_loading && _error == null) TextButton(onPressed: _load, child: const Text('Carregar mais')),
-      ]));
+    return RefreshIndicator(
+      onRefresh: () => _load(reset: true),
+      color: AppColors.primaria,
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(24.w, 8.h, 24.w, 32.h),
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          Text('Suas corridas', style: AppTextStyles.titulo()),
+          SizedBox(height: 16.h),
+          if (p.entregaAtiva != null)
+            Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: _CorridaCard(
+                icone: Icons.two_wheeler_rounded,
+                titulo: 'Corrida ativa',
+                subtitulo: p.entregaAtiva!.statusPedido.label,
+                onTap: () => context.push('/rota-entrega'),
+              ),
+            ),
+          if (_loading)
+            const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: LinearProgressIndicator(color: AppColors.primaria)),
+          if (_error != null)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.h),
+              child: TextButton(
+                onPressed: () => _load(reset: _items.isEmpty),
+                style: TextButton.styleFrom(foregroundColor: AppColors.primaria),
+                child: Text('$_error Tentar novamente'),
+              ),
+            ),
+          if (!_loading && _error == null && _items.isEmpty)
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 32.h),
+              child: Text(
+                'Você ainda não tem corridas no histórico.',
+                key: const Key('historico-empty'),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.subtitulo(),
+              ),
+            ),
+          for (final item in _items)
+            Padding(
+              padding: EdgeInsets.only(bottom: 10.h),
+              child: _CorridaCard(
+                icone: Icons.storefront_rounded,
+                titulo: item.lojaNome ?? 'Loja',
+                subtitulo: '${item.status.label} • '
+                    '${[item.bairroEntrega, item.cidadeEntrega].whereType<String>().join(', ')}\n'
+                    '${item.entregueEm?.toLocal() ?? item.criadoEm?.toLocal() ?? ''}',
+                trailing: Text(
+                  item.taxaFrete == null ? '—' : 'R\$ ${item.taxaFrete!.toStringAsFixed(2)}',
+                  style: TextStyle(fontFamily: 'Roboto', fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.texto),
+                ),
+              ),
+            ),
+          if (!_last && !_loading && _error == null)
+            Center(
+              child: TextButton(
+                onPressed: _load,
+                style: TextButton.styleFrom(foregroundColor: AppColors.primaria),
+                child: const Text('Carregar mais'),
+              ),
+            ),
+        ],
+      ),
+    );
   }
+}
+
+class _CorridaCard extends StatelessWidget {
+  final IconData icone;
+  final String titulo, subtitulo;
+  final Widget? trailing;
+  final VoidCallback? onTap;
+  const _CorridaCard({required this.icone, required this.titulo, required this.subtitulo, this.trailing, this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: EdgeInsets.all(16.r),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16.r),
+          boxShadow: [BoxShadow(color: AppColors.texto.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16.r),
+          onTap: onTap,
+          child: Row(children: [
+            Container(
+              width: 40.w,
+              height: 40.w,
+              decoration: BoxDecoration(color: AppColors.fundo, borderRadius: BorderRadius.circular(12.r)),
+              child: Icon(icone, color: AppColors.primaria, size: 22.r),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(titulo, style: TextStyle(fontFamily: 'Roboto', fontSize: 14.sp, fontWeight: FontWeight.w700, color: AppColors.texto)),
+                  SizedBox(height: 2.h),
+                  Text(subtitulo, style: AppTextStyles.subtitulo(), maxLines: 2, overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            if (trailing != null) trailing! else Icon(Icons.chevron_right_rounded, color: AppColors.desabilitado, size: 20.r),
+          ]),
+        ),
+      );
 }

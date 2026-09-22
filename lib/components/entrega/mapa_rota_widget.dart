@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../globals/theme_colors.dart';
 import '../../models/rota_model.dart';
 
 class MapaRotaWidget extends StatelessWidget {
@@ -23,13 +24,13 @@ class MapaRotaWidget extends StatelessWidget {
             defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
             userAgentPackageName: 'br.com.nhac.motoboy', maxNativeZoom: 19),
         if (points.isNotEmpty) PolylineLayer(polylines: [
-          Polyline(points: points, color: Colors.deepOrange, strokeWidth: 5),
+          Polyline(points: points, color: AppColors.primaria, strokeWidth: 5),
         ]),
         MarkerLayer(markers: [
-          Marker(point: origem, child: const Tooltip(message: 'Loja', child: Icon(Icons.store, color: Colors.deepOrange, size: 36))),
-          Marker(point: destino, child: const Tooltip(message: 'Cliente', child: Icon(Icons.location_on, color: Colors.green, size: 36))),
+          Marker(point: origem, child: Tooltip(message: 'Loja', child: Icon(Icons.store, color: AppColors.primaria, size: 36))),
+          Marker(point: destino, child: Tooltip(message: 'Cliente', child: Icon(Icons.location_on, color: AppColors.texto, size: 36))),
           if (latitude != null && longitude != null)
-            Marker(point: LatLng(latitude!, longitude!), child: const Tooltip(message: 'Você', child: Icon(Icons.my_location, color: Colors.blue, size: 28))),
+            Marker(point: LatLng(latitude!, longitude!), child: Tooltip(message: 'Você', child: Icon(Icons.my_location, color: AppColors.desabilitado, size: 28))),
         ]),
         RichAttributionWidget(attributions: [
           TextSourceAttribution('OpenStreetMap contributors', onTap: () => launchUrl(Uri.parse('https://www.openstreetmap.org/copyright'))),
