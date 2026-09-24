@@ -22,7 +22,8 @@ final GoRouter appRouter = GoRouter(
   refreshListenable: ApiConfig.session,
   redirect: (context, state) {
     const public = {'/', '/email-motoca', '/continuar-senha', '/criar-conta-codigo',
-      '/criar-conta-dados', '/insira-telefone', '/verificacao-numero', '/recuperar-senha'};
+      '/criar-conta-dados', '/insira-telefone', '/verificacao-numero', '/recuperar-senha',
+      '/cadastro-motoboy'};
     final entry = public.contains(state.matchedLocation);
     if (!ApiConfig.temSessaoSalva && !entry) return '/';
     if (ApiConfig.temSessaoSalva && entry) return '/home-motoca';

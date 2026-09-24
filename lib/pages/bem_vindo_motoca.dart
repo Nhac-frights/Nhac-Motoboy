@@ -58,11 +58,26 @@ class BemVindoMotoca extends StatelessWidget {
               left: 24.w,
               right: 24.w,
               height: 49.h,
-              child: BotaoNhac(
-                label: 'Começar',
-                onPressed: () {
-                  context.push('/email-motoca');
-                },
+              child: Row(
+                children: [
+                  Expanded(
+                    child: BotaoNhac(
+                      label: 'Começar',
+                      onPressed: () {
+                        context.push('/email-motoca');
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: BotaoNhac(
+                      label: 'Cadastrar',
+                      onPressed: () {
+                        context.push('/cadastro-motoboy');
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
