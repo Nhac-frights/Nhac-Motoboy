@@ -21,4 +21,10 @@ class UserService {
   Future<void> alterarSenha(String atual, String nova) async {
     await api.request('PUT', '/api/v1/auth/alterar-senha', body: {'senhaAtual': atual, 'novaSenha': nova});
   }
+  Future<Map<String, bool>> obterPreferenciasNotificacao() async =>
+      Map<String, bool>.from(await api.request('GET',
+        '/api/v1/usuarios/${Uri.encodeComponent(userId)}/preferencias-notificacao'));
+  Future<Map<String, bool>> atualizarPreferenciasNotificacao(Map<String, bool> fields) async =>
+      Map<String, bool>.from(await api.request('PUT',
+        '/api/v1/usuarios/${Uri.encodeComponent(userId)}/preferencias-notificacao', body: fields));
 }

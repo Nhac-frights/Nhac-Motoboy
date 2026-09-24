@@ -15,6 +15,7 @@ class CadastroMotoboyPage extends StatefulWidget {
 class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
   final _form = GlobalKey<FormState>();
   final _cpf = TextEditingController(), _cnh = TextEditingController(), _placa = TextEditingController();
+  final _modelo = TextEditingController(), _cor = TextEditingController();
   String _tipo = 'MOTO';
   String? _erro;
   bool _busy = false;
@@ -24,13 +25,15 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
     try {
       await context.read<EntregaProvider>().cadastrarEntregador(
         cpf: _cpf.text.replaceAll(RegExp(r'\D'), ''), cnh: _cnh.text.trim(),
-        placaVeiculo: _placa.text.trim().toUpperCase(), tipoVeiculo: _tipo);
+        placaVeiculo: _placa.text.trim().toUpperCase(), tipoVeiculo: _tipo,
+        modeloVeiculo: _modelo.text.trim().isEmpty ? null : _modelo.text.trim(),
+        corVeiculo: _cor.text.trim().isEmpty ? null : _cor.text.trim());
       if (mounted) context.go('/home-motoca');
     } catch (e) { if (mounted) setState(() => _erro = e.toString()); }
     finally { if (mounted) setState(() => _busy = false); }
   }
   @override
-  void dispose() { _cpf.dispose(); _cnh.dispose(); _placa.dispose(); super.dispose(); }
+  void dispose() { _cpf.dispose(); _cnh.dispose(); _placa.dispose(); _modelo.dispose(); _cor.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.fundo,
@@ -76,6 +79,18 @@ class _CadastroMotoboyPageState extends State<CadastroMotoboyPage> {
             TextFormField(key: const Key('cadastro-placa'), controller: _placa,
               decoration: _input('Ex: ABC-1234 ou BRA2E19'),
               textCapitalization: TextCapitalization.characters, validator: Validators.validarPlaca),
+            SizedBox(height: 24.h),
+            _label('Modelo do Veículo (opcional)'),
+            SizedBox(height: 8.h),
+            TextFormField(controller: _modelo, decoration: _input('Ex: Honda CG 160 Fan'),
+              textCapitalization: TextCapitalization.words,
+              validator: (value) => (value?.trim().length ?? 0) > 60 ? 'Máximo de 60 caracteres' : null),
+            SizedBox(height: 24.h),
+            _label('Cor do Veículo (opcional)'),
+            SizedBox(height: 8.h),
+            TextFormField(controller: _cor, decoration: _input('Ex: Preta'),
+              textCapitalization: TextCapitalization.words,
+              validator: (value) => (value?.trim().length ?? 0) > 30 ? 'Máximo de 30 caracteres' : null),
             SizedBox(height: 32.h),
             Container(padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(color: AppColors.secundaria.withValues(alpha: 0.1),

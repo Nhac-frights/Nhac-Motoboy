@@ -24,6 +24,18 @@ class EntregadorService {
     final data = await api.request('GET', '/api/v1/entregador/perfil', emptyStatuses: {404});
     return data == null ? null : EntregadorCadastroModel.fromJson(data);
   }
+  Future<EntregadorCadastroModel> atualizarVeiculo({required String tipoVeiculo,
+    required String placaVeiculo, String? modeloVeiculo, String? corVeiculo}) async =>
+      EntregadorCadastroModel.fromJson(await api.request('PATCH', '/api/v1/entregador/veiculo',
+        body: {'tipoVeiculo': tipoVeiculo, 'placaVeiculo': placaVeiculo,
+          'modeloVeiculo': modeloVeiculo, 'corVeiculo': corVeiculo}));
+  Future<EntregadorCadastroModel> atualizarDocumentos({required String cpf, required String cnh}) async =>
+      EntregadorCadastroModel.fromJson(await api.request('PATCH', '/api/v1/entregador/documentos',
+        body: {'cpf': cpf, 'cnh': cnh}));
+  Future<EntregadorCadastroModel> atualizarDadosBancarios({required String tipoChavePix,
+    required String chavePix}) async =>
+      EntregadorCadastroModel.fromJson(await api.request('PATCH', '/api/v1/entregador/dados-bancarios',
+        body: {'tipoChavePix': tipoChavePix, 'chavePix': chavePix}));
   Future<EntregadorCadastroModel> atualizarStatus(StatusOperacional status) async {
     if (status != StatusOperacional.online && status != StatusOperacional.offline) {
       throw ArgumentError('O status é controlado pelo backend.');

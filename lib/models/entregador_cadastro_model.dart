@@ -7,8 +7,13 @@ class EntregadorCadastroModel {
   final String? email;
   final String? telefone;
   final String? cnh;
+  final String? cpf;
   final String? placaVeiculo;
   final String? tipoVeiculo; // MOTO | BICICLETA | CARRO
+  final String? corVeiculo;
+  final String? modeloVeiculo;
+  final String? tipoChavePix;
+  final String? chavePix;
   final String statusOperacional; // OFFLINE | ONLINE | EM_ENTREGA
   final double? latitudeAtual;
   final double? longitudeAtual;
@@ -23,8 +28,13 @@ class EntregadorCadastroModel {
     this.email,
     this.telefone,
     this.cnh,
+    this.cpf,
     this.placaVeiculo,
     this.tipoVeiculo,
+    this.corVeiculo,
+    this.modeloVeiculo,
+    this.tipoChavePix,
+    this.chavePix,
     required this.statusOperacional,
     this.latitudeAtual,
     this.longitudeAtual,
@@ -45,8 +55,13 @@ class EntregadorCadastroModel {
       email: json['email']?.toString(),
       telefone: json['telefone']?.toString(),
       cnh: json['cnh']?.toString(),
+      cpf: json['cpf']?.toString(),
       placaVeiculo: json['placaVeiculo']?.toString(),
       tipoVeiculo: json['tipoVeiculo']?.toString(),
+      corVeiculo: json['corVeiculo']?.toString(),
+      modeloVeiculo: json['modeloVeiculo']?.toString(),
+      tipoChavePix: json['tipoChavePix']?.toString(),
+      chavePix: json['chavePix']?.toString(),
       statusOperacional: json['statusOperacional']?.toString() ?? 'OFFLINE',
       latitudeAtual: (json['latitudeAtual'] as num?)?.toDouble(),
       longitudeAtual: (json['longitudeAtual'] as num?)?.toDouble(),

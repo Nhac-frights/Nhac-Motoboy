@@ -13,6 +13,10 @@ import '../pages/email_motoca.dart';
 import '../pages/home/home_motoca_page.dart';
 import '../pages/home/tabs/profile/editar_email_page.dart';
 import '../pages/home/tabs/profile/editar_foto_page.dart';
+import '../pages/home/tabs/profile/editar_veiculo_page.dart';
+import '../pages/home/tabs/profile/editar_documentos_page.dart';
+import '../pages/home/tabs/profile/editar_dados_bancarios_page.dart';
+import '../pages/home/tabs/profile/notificacoes_page.dart';
 import '../pages/home/tabs/profile/editar_nome_page.dart';
 import '../pages/home/tabs/profile/editar_senha_page.dart';
 import '../pages/home/tabs/profile/editar_telefone_page.dart';
@@ -45,6 +49,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(path: '/editar-nome', builder: (_, _) => const EditarNomePage()),
     GoRoute(path: '/editar-email', builder: (_, _) => const EditarEmailPage()),
     GoRoute(path: '/editar-foto', builder: (_, _) => const EditarFotoPage()),
+    GoRoute(path: '/editar-veiculo', builder: (_, _) => const EditarVeiculoPage()),
+    GoRoute(path: '/editar-documentos', builder: (_, _) => const EditarDocumentosPage()),
+    GoRoute(path: '/editar-dados-bancarios', builder: (_, _) => const EditarDadosBancariosPage()),
+    GoRoute(path: '/notificacoes', builder: (_, _) => const NotificacoesPage()),
     GoRoute(path: '/editar-telefone', builder: (_, _) => const EditarTelefonePage()),
     GoRoute(path: '/editar-senha', builder: (_, _) => const EditarSenhaPage()),
     GoRoute(path: '/rota-entrega', builder: (_, _) => const RotaEntregaPage()),

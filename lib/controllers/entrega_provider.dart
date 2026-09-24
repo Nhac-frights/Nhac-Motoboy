@@ -127,6 +127,27 @@ class EntregaProvider extends ChangeNotifier with WidgetsBindingObserver {
       return profile;
     } finally { if (_valid(epoch)) { _busy = false; _notify(); } }
   }
+  Future<void> atualizarVeiculo({required String tipoVeiculo, required String placaVeiculo,
+    String? modeloVeiculo, String? corVeiculo}) => _atualizarPerfil(() =>
+      _service.atualizarVeiculo(tipoVeiculo: tipoVeiculo, placaVeiculo: placaVeiculo,
+        modeloVeiculo: modeloVeiculo, corVeiculo: corVeiculo));
+  Future<void> atualizarDocumentos({required String cpf, required String cnh}) =>
+      _atualizarPerfil(() => _service.atualizarDocumentos(cpf: cpf, cnh: cnh));
+  Future<void> atualizarDadosBancarios({required String tipoChavePix, required String chavePix}) =>
+      _atualizarPerfil(() => _service.atualizarDadosBancarios(
+        tipoChavePix: tipoChavePix, chavePix: chavePix));
+  Future<void> _atualizarPerfil(Future<EntregadorCadastroModel> Function() salvar) async {
+    if (_busy || _syncing || !isCadastrado) throw StateError('Aguarde o carregamento do perfil.');
+    _busy = true; _notify();
+    final epoch = _epoch;
+    try {
+      final profile = await salvar();
+      if (!_valid(epoch)) return;
+      _applyProfile(profile);
+    } finally {
+      if (_valid(epoch)) { _busy = false; _notify(); }
+    }
+  }
   Future<void> alternarStatusOnline(bool online) async {
     if (_busy || _syncing || emEntrega || !cadastroAtivo) return;
     _busy = true; _changingStatus = true; erro = null; _notify();

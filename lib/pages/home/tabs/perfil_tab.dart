@@ -60,7 +60,7 @@ class PerfilTab extends StatelessWidget {
                 style: TextStyle(fontFamily: 'Roboto', fontSize: 22.sp, fontWeight: FontWeight.bold, color: AppColors.texto)),
             SizedBox(height: 4.h),
             Text(profile == null ? 'Complete seu cadastro de entregador'
-                : '${profile.tipoVeiculo ?? 'Veículo'} • Placa ${profile.placaVeiculo ?? '—'}',
+                : '${profile.modeloVeiculo?.isNotEmpty == true ? profile.modeloVeiculo : profile.tipoVeiculo ?? 'Veículo'} • Placa ${profile.placaVeiculo ?? '—'}',
                 maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontFamily: 'Roboto', fontSize: 12.sp,
                     color: Colors.grey.shade700)),
@@ -80,21 +80,32 @@ class PerfilTab extends StatelessWidget {
         _Section(children: [
           _AccountRow(icon: Icons.person_outline, title: 'Dados Pessoais',
             subtitle: user.nome, onTap: () => context.push('/editar-nome')),
+          _AccountRow(icon: Icons.photo_camera_outlined, title: 'Foto de Perfil',
+            subtitle: 'Alterar foto', onTap: () => context.push('/editar-foto')),
           _AccountRow(icon: Icons.mail_outline, title: 'E-mail',
             subtitle: user.email, onTap: () => context.push('/editar-email')),
           _AccountRow(icon: Icons.phone_outlined, title: 'Telefone',
             subtitle: user.telefone, onTap: () => context.push('/editar-telefone')),
           _AccountRow(icon: Icons.two_wheeler_outlined, title: 'Veículo & Moto',
             subtitle: profile == null ? 'Toque para cadastrar seu veículo'
-                : '${profile.tipoVeiculo ?? 'Veículo'} • Placa ${profile.placaVeiculo ?? '—'}',
-            onTap: profile == null ? () => context.push('/cadastro-motoboy') : null),
-          if (profile != null) _AccountRow(icon: Icons.badge_outlined, title: 'CNH',
-            subtitle: profile.cnh ?? 'Não informada'),
+                : '${profile.modeloVeiculo?.isNotEmpty == true ? profile.modeloVeiculo : profile.tipoVeiculo ?? 'Veículo'} • Placa ${profile.placaVeiculo ?? '—'}',
+            onTap: () => context.push(profile == null ? '/cadastro-motoboy' : '/editar-veiculo')),
+          if (profile != null) ...[
+            _AccountRow(icon: Icons.badge_outlined, title: 'Documentos (CPF & CNH)',
+              subtitle: 'Consultar e atualizar', onTap: () => context.push('/editar-documentos')),
+            _AccountRow(icon: Icons.credit_card_outlined, title: 'Dados Bancários',
+              subtitle: profile.chavePix?.isNotEmpty == true ? 'Chave PIX cadastrada' : 'Cadastrar chave PIX',
+              onTap: () => context.push('/editar-dados-bancarios')),
+          ],
         ]),
         SizedBox(height: 32.h),
         _sectionTitle('Configurações'),
         SizedBox(height: 16.h),
         _Section(children: [
+          _AccountRow(icon: Icons.notifications_none, title: 'Notificações',
+            subtitle: 'Preferências de avisos', onTap: () => context.push('/notificacoes')),
+          _AccountRow(icon: Icons.help_outline, title: 'Suporte & Ajuda',
+            subtitle: 'Dúvidas sobre o aplicativo', onTap: () => _showHelp(context)),
           _AccountRow(icon: Icons.lock_outline, title: 'Alterar senha',
             subtitle: 'Atualizar senha da conta', onTap: () => context.push('/editar-senha')),
           _AccountRow(icon: Icons.logout, title: 'Sair da conta',
@@ -107,6 +118,26 @@ class PerfilTab extends StatelessWidget {
 
   Widget _sectionTitle(String title) => Text(title, style: TextStyle(
     fontFamily: 'Roboto', fontSize: 18.sp, fontWeight: FontWeight.bold, color: AppColors.texto));
+
+  void _showHelp(BuildContext context) => showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
+    builder: (ctx) => SafeArea(child: Padding(
+      padding: EdgeInsets.all(24.r),
+      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _sectionTitle('Ajuda'),
+        SizedBox(height: 16.h),
+        Text('Para receber ofertas, mantenha o GPS ligado, permita o acesso à localização e ative a disponibilidade na home.',
+          style: AppTextStyles.subtitulo()),
+        SizedBox(height: 12.h),
+        Text('Os ganhos e o histórico de corridas ficam nas abas inferiores. Durante uma entrega, abra a rota pela home ou por Pedidos.',
+          style: AppTextStyles.subtitulo()),
+        SizedBox(height: 20.h),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fechar')),
+      ]),
+    )),
+  );
 
   void _accountOptions(BuildContext context, EntregaProvider delivery) {
     showModalBottomSheet(context: context, backgroundColor: Colors.transparent,
